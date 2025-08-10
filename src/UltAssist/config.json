@@ -1,0 +1,18 @@
+{
+  "HeadphoneDeviceId": "",
+  "VirtualMicDeviceId": "",
+  "Hotkey": "V",
+  "FadeInMs": 120,
+  "FadeOutMs": 150,
+  "Heroes": [
+    {
+      "Hero": "Default",
+      "AudioPath": "",
+      "Volume": 0.85,
+      "MaxDurationMs": 12000,
+      "Loop": false
+    }
+  ],
+  "CurrentHero": "Default"
+}
+

@@ -1,0 +1,100 @@
+<Window x:Class="UltAssist.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="UltAssist (M1)" Height="520" Width="820" WindowStartupLocation="CenterScreen">
+    <Grid Margin="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <GroupBox Header="输出设备" Padding="10" Grid.Row="0" Margin="0,0,0,12">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="200"/>
+                    <ColumnDefinition Width="24"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="200"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="耳机/扬声器：" VerticalAlignment="Center"/>
+                <ComboBox x:Name="HeadphoneCombo" Grid.Column="1" Margin="6,0" DisplayMemberPath="FriendlyName"/>
+                <TextBlock Grid.Column="3" Text="虚拟麦设备：" VerticalAlignment="Center"/>
+                <ComboBox x:Name="VirtualMicCombo" Grid.Column="4" Margin="6,0" DisplayMemberPath="FriendlyName"/>
+            </Grid>
+        </GroupBox>
+
+        <GroupBox Header="全局设置" Padding="10" Grid.Row="1" Margin="0,0,0,12">
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="热键：V (再次按下强制停止)" VerticalAlignment="Center"/>
+                <Border Width="16"/>
+                <TextBlock Text="淡入(ms)：" VerticalAlignment="Center"/>
+                <TextBox x:Name="FadeInBox" Width="60" Text="120"/>
+                <Border Width="16"/>
+                <TextBlock Text="淡出(ms)：" VerticalAlignment="Center"/>
+                <TextBox x:Name="FadeOutBox" Width="60" Text="150"/>
+                <Border Width="16"/>
+                <Button x:Name="SaveGlobalBtn" Content="保存全局" Width="100" Click="SaveGlobalBtn_Click"/>
+            </StackPanel>
+        </GroupBox>
+
+        <GroupBox Header="英雄配置" Padding="10" Grid.Row="2">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+                <Grid Margin="0,0,0,8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="180"/>
+                        <ColumnDefinition Width="16"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="180"/>
+                        <ColumnDefinition Width="16"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="100"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="当前英雄：" VerticalAlignment="Center"/>
+                    <ComboBox x:Name="HeroCombo" Grid.Column="1" Margin="6,0" SelectionChanged="HeroCombo_SelectionChanged"/>
+                    <Button Grid.Column="3" Content="新增英雄" Click="AddHeroBtn_Click"/>
+                    <TextBox x:Name="NewHeroNameBox" Grid.Column="4" Margin="6,0"/>
+                    <Button Grid.Column="6" Content="删除当前英雄" Click="DeleteHeroBtn_Click"/>
+                </Grid>
+
+                <Grid Grid.Row="1" Margin="0,0,0,8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="80"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="80"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="80"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="音乐文件：" VerticalAlignment="Center"/>
+                    <TextBox x:Name="AudioPathBox" Grid.Column="1" Margin="6,0"/>
+                    <Button Grid.Column="2" Content="浏览..." Click="BrowseAudioBtn_Click"/>
+                    <TextBlock Grid.Column="3" Text="音量：" VerticalAlignment="Center"/>
+                    <Slider x:Name="VolumeSlider" Grid.Column="4" Minimum="0" Maximum="1" Value="0.85" Width="120"/>
+                    <TextBlock Grid.Column="5" Text="最长(ms)：" VerticalAlignment="Center"/>
+                    <TextBox x:Name="MaxMsBox" Grid.Column="6" Width="80" Text="12000"/>
+                    <CheckBox x:Name="LoopCheck" Grid.Column="7" Content="循环" VerticalAlignment="Center"/>
+                    <Button Grid.Column="8" Content="保存英雄配置" Click="SaveHeroBtn_Click"/>
+                </Grid>
+
+                <Border Grid.Row="2" BorderBrush="#ddd" BorderThickness="1" Padding="8">
+                    <StackPanel>
+                        <TextBlock Text="使用说明：按 V 开始/强停音乐；程序仅在运行时向所选设备播放，不修改系统默认设备。" TextWrapping="Wrap"/>
+                        <TextBlock Text="下一步将加入：ROI校准与模板匹配，实现开大确认 / 收大停止。" Foreground="#666" Margin="0,6,0,0"/>
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </GroupBox>
+    </Grid>
+</Window>
+
