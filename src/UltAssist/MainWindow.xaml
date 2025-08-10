@@ -42,6 +42,9 @@
                 <Border Width="16"/>
                 <TextBlock Text="最近热键：" VerticalAlignment="Center"/>
                 <TextBlock x:Name="LastHotkeyText" Text="-" Margin="6,0" VerticalAlignment="Center"/>
+                <Border Width="16"/>
+                <TextBlock Text="匹配分数(开/收)：" VerticalAlignment="Center"/>
+                <TextBlock x:Name="MatchScoreText" Text="- / -" Margin="6,0" VerticalAlignment="Center"/>
             </StackPanel>
         </GroupBox>
 
@@ -51,6 +54,7 @@
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
                 <Grid Margin="0,0,0,8">
                     <Grid.ColumnDefinitions>
@@ -63,11 +67,12 @@
                         <ColumnDefinition Width="Auto"/>
                         <ColumnDefinition Width="100"/>
                     </Grid.ColumnDefinitions>
-                    <TextBlock Text="当前英雄：" VerticalAlignment="Center"/>
-                    <ComboBox x:Name="HeroCombo" Grid.Column="1" Margin="6,0" SelectionChanged="HeroCombo_SelectionChanged"/>
+                        <TextBlock Text="当前英雄：" VerticalAlignment="Center"/>
+                        <ComboBox x:Name="HeroCombo" Grid.Column="1" Margin="6,0" SelectionChanged="HeroCombo_SelectionChanged"/>
                     <Button Grid.Column="3" Content="新增英雄" Click="AddHeroBtn_Click"/>
                     <TextBox x:Name="NewHeroNameBox" Grid.Column="4" Margin="6,0"/>
                     <Button Grid.Column="6" Content="删除当前英雄" Click="DeleteHeroBtn_Click"/>
+                        <Button Grid.Column="7" Content="恢复默认配置" Click="ResetHeroBtn_Click"/>
                 </Grid>
 
                 <Grid Grid.Row="1" Margin="0,0,0,8">
@@ -99,6 +104,47 @@
                         <TextBlock Text="下一步将加入：ROI校准与模板匹配，实现开大确认 / 收大停止。" Foreground="#666" Margin="0,6,0,0"/>
                     </StackPanel>
                 </Border>
+
+                <GroupBox Grid.Row="3" Header="视觉配置 (M2)" Padding="10" Margin="0,12,0,0">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="120"/>
+                            <ColumnDefinition Width="16"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="120"/>
+                            <ColumnDefinition Width="16"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <CheckBox x:Name="VisionEnableCheck" Content="启用视觉确认/收尾"/>
+                        <Button Grid.Column="1" Content="框选 ROI" Click="SelectRoiBtn_Click"/>
+                        <TextBlock Grid.Column="3" VerticalAlignment="Center" Text="采集："/>
+                        <StackPanel Grid.Column="4" Orientation="Horizontal">
+                            <Button Content="采集开大模板" Click="CaptureOpenTemplateBtn_Click"/>
+                            <Border Width="8"/>
+                            <Button Content="采集收大模板" Click="CaptureCloseTemplateBtn_Click"/>
+                        </StackPanel>
+                        <Button Grid.Column="6" Content="保存视觉配置" Click="SaveVisionBtn_Click"/>
+
+                        <StackPanel Grid.Row="1" Grid.ColumnSpan="7" Orientation="Horizontal" Margin="0,8,0,0">
+                            <Button Content="调试：查看 ROI 与模板" Click="DumpVisionBtn_Click"/>
+                            <Border Width="8"/>
+                            <Button Content="打开实时预览" Click="OpenPreviewBtn_Click"/>
+                            <Border Width="16"/>
+                            <TextBlock Text="默认模板根目录：" VerticalAlignment="Center"/>
+                            <TextBox x:Name="DefaultTplRootBox" Width="200" Margin="6,0"/>
+                            <Button Content="浏览..." Click="BrowseTplRootBtn_Click"/>
+                            <Border Width="16"/>
+                            <TextBlock Text="英雄模板目录：" VerticalAlignment="Center"/>
+                            <TextBox x:Name="HeroTplDirBox" Width="200" Margin="6,0"/>
+                            <Button Content="应用到当前英雄" Click="ApplyHeroTplDirBtn_Click"/>
+                        </StackPanel>
+                    </Grid>
+                </GroupBox>
             </Grid>
         </GroupBox>
     </Grid>

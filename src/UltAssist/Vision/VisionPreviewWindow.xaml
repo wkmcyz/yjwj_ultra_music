@@ -1,0 +1,49 @@
+<Window x:Class="UltAssist.Vision.VisionPreviewWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="视觉实时预览" Height="420" Width="360" WindowStartupLocation="CenterScreen">
+    <Grid Margin="8">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <StackPanel Orientation="Horizontal" Grid.Row="0" Margin="0,0,0,8">
+            <TextBlock Text="开大分数：" VerticalAlignment="Center"/>
+            <TextBlock x:Name="OpenScoreText" Text="0.00" Margin="6,0,16,0" VerticalAlignment="Center"/>
+            <TextBlock Text="收大分数：" VerticalAlignment="Center"/>
+            <TextBlock x:Name="CloseScoreText" Text="0.00" Margin="6,0,16,0" VerticalAlignment="Center"/>
+            <TextBlock Text="FPS：" VerticalAlignment="Center"/>
+            <TextBlock x:Name="FpsText" Text="-" Margin="6,0,0,0" VerticalAlignment="Center"/>
+        </StackPanel>
+        <Border Grid.Row="1" BorderBrush="#ddd" BorderThickness="1">
+            <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+                <Image x:Name="PreviewImage" Stretch="None"/>
+            </ScrollViewer>
+        </Border>
+        <Grid Grid.Row="2" Margin="0,8,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <StackPanel Grid.Column="0">
+                <TextBlock Text="开大模板"/>
+                <Border BorderBrush="#ddd" BorderThickness="1" Margin="0,4,8,0">
+                    <Image x:Name="OpenTplImage" Stretch="Uniform" Height="120"/>
+                </Border>
+            </StackPanel>
+            <StackPanel Grid.Column="1">
+                <TextBlock Text="收大模板"/>
+                <Border BorderBrush="#ddd" BorderThickness="1" Margin="0,4,0,0">
+                    <Image x:Name="CloseTplImage" Stretch="Uniform" Height="120"/>
+                </Border>
+            </StackPanel>
+        </Grid>
+        <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,8,0,0">
+            <Button Content="关闭" Width="80" Click="CloseBtn_Click"/>
+        </StackPanel>
+    </Grid>
+</Window>
+
+
