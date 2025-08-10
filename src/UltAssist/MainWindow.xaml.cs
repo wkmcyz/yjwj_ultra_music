@@ -10,6 +10,7 @@ using UltAssist.Core;
 using UltAssist.Input;
 using UltAssist.Services;
 using UltAssist.Vision;
+using WinForms = System.Windows.Forms;
 
 namespace UltAssist
 {
@@ -21,6 +22,7 @@ namespace UltAssist
         private AudioDeviceService _audioService = null!;
         private System.Drawing.Rectangle? _roiRectPx;
         private RoiOverlayWindow? _overlay;
+        private DatasetCaptureService _datasetCapture = new();
 
         public MainWindow()
         {
@@ -378,6 +380,157 @@ namespace UltAssist
                 }
             );
             _preview.Show();
+        }
+
+        private void BrowseDatasetRootBtn_Click(object sender, RoutedEventArgs e)
+        {
+            var dlg = new WinForms.FolderBrowserDialog();
+            if (dlg.ShowDialog() == WinForms.DialogResult.OK)
+            {
+                DatasetRootBox.Text = dlg.SelectedPath;
+            }
+        }
+
+        private void StartAutoCaptureBtn_Click(object sender, RoutedEventArgs e)
+        {
+            var rect = RoiToScreenRect();
+            if (rect == System.Drawing.Rectangle.Empty)
+            {
+                System.Windows.MessageBox.Show("请先框选 ROI", "自动截图", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+            var root = (DatasetRootBox.Text ?? string.Empty).Trim();
+            if (string.IsNullOrEmpty(root))
+            {
+                System.Windows.MessageBox.Show("请先选择数据集根目录", "自动截图", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+            var hero = string.IsNullOrWhiteSpace(LabelPrefixBox.Text) ? _config.CurrentHero : LabelPrefixBox.Text.Trim();
+            _datasetCapture.Start(rect, root, hero, 1000);
+            StartAutoCaptureBtn.IsEnabled = false;
+        }
+
+        private void StopAutoCaptureBtn_Click(object sender, RoutedEventArgs e)
+        {
+            _datasetCapture.Stop();
+            StartAutoCaptureBtn.IsEnabled = true;
+        }
+
+        private void AutoLabelBtn_Click(object sender, RoutedEventArgs e)
+        {
+            var root = (DatasetRootBox.Text ?? string.Empty).Trim();
+            if (string.IsNullOrEmpty(root))
+            {
+                System.Windows.MessageBox.Show("请先选择数据集根目录", "自动标注", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+            var hero = string.IsNullOrWhiteSpace(LabelPrefixBox.Text) ? _config.CurrentHero : LabelPrefixBox.Text.Trim();
+            var chargingDir = System.IO.Path.Combine(root, "raw", hero, "charging");
+            var readyDir = System.IO.Path.Combine(root, "raw", hero, "ready");
+            var releaseDir = System.IO.Path.Combine(root, "raw", hero, "release");
+            var pythonRoot = ResolvePythonRoot();
+            System.Drawing.Rectangle roi1 = ParseRect(AutoLabelX1, AutoLabelY1, AutoLabelW1, AutoLabelH1);
+            System.Drawing.Rectangle roi2 = ParseRect(AutoLabelX2, AutoLabelY2, AutoLabelW2, AutoLabelH2);
+            System.Drawing.Rectangle roi3 = ParseRect(AutoLabelX3, AutoLabelY3, AutoLabelW3, AutoLabelH3);
+            if (roi1.Width == 0 || roi1.Height == 0 || roi2.Width == 0 || roi2.Height == 0 || roi3.Width == 0 || roi3.Height == 0)
+            {
+                System.Windows.MessageBox.Show("请填写三个状态各自的 ROI (X,Y,W,H)", "自动标注", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+            DatasetCaptureService.AutoLabelUsingRoiBoxes(root, hero, roi1, roi2, roi3, chargingDir, readyDir, releaseDir, pythonRoot);
+            System.Windows.MessageBox.Show("已根据 ROI 批量生成 YOLO 标注到 python/datasets/labels/train，图像复制到 images/train。", "自动标注", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+
+        private static string ResolvePythonRoot()
+        {
+            var dir = System.AppDomain.CurrentDomain.BaseDirectory;
+            for (int i = 0; i < 6; i++)
+            {
+                var candidate = System.IO.Path.Combine(dir, "python");
+                if (System.IO.Directory.Exists(candidate)) return candidate;
+                var parent = System.IO.Path.GetDirectoryName(dir?.TrimEnd(System.IO.Path.DirectorySeparatorChar) ?? string.Empty);
+                if (string.IsNullOrEmpty(parent)) break;
+                dir = parent;
+            }
+            return System.IO.Path.Combine(System.AppDomain.CurrentDomain.BaseDirectory, "python");
+        }
+
+        private static System.Drawing.Rectangle ParseRect(System.Windows.Controls.TextBox xBox, System.Windows.Controls.TextBox yBox, System.Windows.Controls.TextBox wBox, System.Windows.Controls.TextBox hBox)
+        {
+            int.TryParse(xBox.Text, out var x);
+            int.TryParse(yBox.Text, out var y);
+            int.TryParse(wBox.Text, out var w);
+            int.TryParse(hBox.Text, out var h);
+            return new System.Drawing.Rectangle(x, y, w, h);
+        }
+
+        private void OpenRawDirBtn_Click(object sender, RoutedEventArgs e)
+        {
+            var root = (DatasetRootBox.Text ?? string.Empty).Trim();
+            if (string.IsNullOrEmpty(root)) return;
+            var hero = string.IsNullOrWhiteSpace(LabelPrefixBox.Text) ? _config.CurrentHero : LabelPrefixBox.Text.Trim();
+            var dir = System.IO.Path.Combine(root, "raw", hero);
+            if (System.IO.Directory.Exists(dir))
+            {
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                {
+                    FileName = dir,
+                    UseShellExecute = true
+                });
+            }
+        }
+
+        private void FillRoiFromCurrentBtn_Click(object sender, RoutedEventArgs e)
+        {
+            var rect = RoiToScreenRect();
+            if (rect == System.Drawing.Rectangle.Empty)
+            {
+                System.Windows.MessageBox.Show("请先框选 ROI", "填充", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+            AutoLabelX1.Text = AutoLabelX2.Text = AutoLabelX3.Text = rect.X.ToString();
+            AutoLabelY1.Text = AutoLabelY2.Text = AutoLabelY3.Text = rect.Y.ToString();
+            AutoLabelW1.Text = AutoLabelW2.Text = AutoLabelW3.Text = rect.Width.ToString();
+            AutoLabelH1.Text = AutoLabelH2.Text = AutoLabelH3.Text = rect.Height.ToString();
+        }
+
+        private void PickChargingRoiBtn_Click(object sender, RoutedEventArgs e)
+        {
+            var picker = new Vision.RoiSelectorWindow();
+            if (picker.ShowDialog() == true)
+            {
+                var r = picker.SelectedRectPixels;
+                AutoLabelX1.Text = ((int)r.X).ToString();
+                AutoLabelY1.Text = ((int)r.Y).ToString();
+                AutoLabelW1.Text = ((int)r.Width).ToString();
+                AutoLabelH1.Text = ((int)r.Height).ToString();
+            }
+        }
+
+        private void PickReadyRoiBtn_Click(object sender, RoutedEventArgs e)
+        {
+            var picker = new Vision.RoiSelectorWindow();
+            if (picker.ShowDialog() == true)
+            {
+                var r = picker.SelectedRectPixels;
+                AutoLabelX2.Text = ((int)r.X).ToString();
+                AutoLabelY2.Text = ((int)r.Y).ToString();
+                AutoLabelW2.Text = ((int)r.Width).ToString();
+                AutoLabelH2.Text = ((int)r.Height).ToString();
+            }
+        }
+
+        private void PickReleaseRoiBtn_Click(object sender, RoutedEventArgs e)
+        {
+            var picker = new Vision.RoiSelectorWindow();
+            if (picker.ShowDialog() == true)
+            {
+                var r = picker.SelectedRectPixels;
+                AutoLabelX3.Text = ((int)r.X).ToString();
+                AutoLabelY3.Text = ((int)r.Y).ToString();
+                AutoLabelW3.Text = ((int)r.Width).ToString();
+                AutoLabelH3.Text = ((int)r.Height).ToString();
+            }
         }
 
         private void DumpVisionBtn_Click(object sender, RoutedEventArgs e)

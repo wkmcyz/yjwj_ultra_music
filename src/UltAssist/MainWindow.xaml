@@ -7,6 +7,7 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
         <GroupBox Header="输出设备" Padding="10" Grid.Row="0" Margin="0,0,0,12">
@@ -143,9 +144,65 @@
                             <TextBox x:Name="HeroTplDirBox" Width="200" Margin="6,0"/>
                             <Button Content="应用到当前英雄" Click="ApplyHeroTplDirBtn_Click"/>
                         </StackPanel>
+
+                        
                     </Grid>
                 </GroupBox>
             </Grid>
+        </GroupBox>
+
+        <GroupBox Grid.Row="3" Header="数据采集与自动标注" Padding="10" Margin="0,12,0,0">
+            <StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                    <TextBlock Text="数据集根目录：" VerticalAlignment="Center"/>
+                    <TextBox x:Name="DatasetRootBox" Width="320" Margin="6,0"/>
+                    <Button Content="浏览..." Click="BrowseDatasetRootBtn_Click"/>
+                    <Border Width="12"/>
+                    <TextBlock Text="标注前缀：" VerticalAlignment="Center"/>
+                    <TextBox x:Name="LabelPrefixBox" Width="160" Margin="6,0"/>
+                    <Border Width="12"/>
+                    <Button x:Name="StartAutoCaptureBtn" Content="开始自动截图(1fps)" Click="StartAutoCaptureBtn_Click"/>
+                    <Border Width="8"/>
+                    <Button Content="停止截图" Click="StopAutoCaptureBtn_Click"/>
+                    <Border Width="8"/>
+                    <Button Content="打开 raw 目录" Click="OpenRawDirBtn_Click"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="charging ROI(px)：X" VerticalAlignment="Center"/>
+                    <TextBox x:Name="AutoLabelX1" Width="50" Margin="4,0"/>
+                    <TextBlock Text="Y" VerticalAlignment="Center"/>
+                    <TextBox x:Name="AutoLabelY1" Width="50" Margin="4,0"/>
+                    <TextBlock Text="W" VerticalAlignment="Center"/>
+                    <TextBox x:Name="AutoLabelW1" Width="50" Margin="4,0"/>
+                    <TextBlock Text="H" VerticalAlignment="Center"/>
+                    <TextBox x:Name="AutoLabelH1" Width="50" Margin="4,0"/>
+                    <Button Content="框选" Margin="8,0,0,0" Click="PickChargingRoiBtn_Click"/>
+                    <Border Width="12"/>
+                    <TextBlock Text="ready ROI(px)：X" VerticalAlignment="Center"/>
+                    <TextBox x:Name="AutoLabelX2" Width="50" Margin="4,0"/>
+                    <TextBlock Text="Y" VerticalAlignment="Center"/>
+                    <TextBox x:Name="AutoLabelY2" Width="50" Margin="4,0"/>
+                    <TextBlock Text="W" VerticalAlignment="Center"/>
+                    <TextBox x:Name="AutoLabelW2" Width="50" Margin="4,0"/>
+                    <TextBlock Text="H" VerticalAlignment="Center"/>
+                    <TextBox x:Name="AutoLabelH2" Width="50" Margin="4,0"/>
+                    <Button Content="框选" Margin="8,0,0,0" Click="PickReadyRoiBtn_Click"/>
+                    <Border Width="12"/>
+                    <TextBlock Text="release ROI(px)：X" VerticalAlignment="Center"/>
+                    <TextBox x:Name="AutoLabelX3" Width="50" Margin="4,0"/>
+                    <TextBlock Text="Y" VerticalAlignment="Center"/>
+                    <TextBox x:Name="AutoLabelY3" Width="50" Margin="4,0"/>
+                    <TextBlock Text="W" VerticalAlignment="Center"/>
+                    <TextBox x:Name="AutoLabelW3" Width="50" Margin="4,0"/>
+                    <TextBlock Text="H" VerticalAlignment="Center"/>
+                    <TextBox x:Name="AutoLabelH3" Width="50" Margin="4,0"/>
+                    <Button Content="框选" Margin="8,0,0,0" Click="PickReleaseRoiBtn_Click"/>
+                    <Border Width="8"/>
+                    <Button Content="用当前 ROI 填充" Click="FillRoiFromCurrentBtn_Click"/>
+                    <Border Width="8"/>
+                    <Button Content="自动标注到训练集" Click="AutoLabelBtn_Click"/>
+                </StackPanel>
+            </StackPanel>
         </GroupBox>
     </Grid>
 </Window>
