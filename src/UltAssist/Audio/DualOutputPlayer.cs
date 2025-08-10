@@ -17,6 +17,7 @@ namespace UltAssist.Audio
         private readonly float fadeOutMs;
         private readonly bool loop;
         private ISampleProvider? srcA, srcB;
+        private IDisposable? srcADisposable, srcBDisposable;
 
         public DualOutputPlayer(MMDevice headphone, MMDevice virtualMic, float fadeInMs = 120f, float fadeOutMs = 150f, bool loop = false)
         {
@@ -31,11 +32,10 @@ namespace UltAssist.Audio
         {
             Stop();
 
-            var readerA = CreateReader(filePath);
-            var readerB = CreateReader(filePath);
-
-            srcA = Wrap(readerA);
-            srcB = Wrap(readerB);
+            srcA = CreateReader(filePath, out srcADisposable);
+            srcB = CreateReader(filePath, out srcBDisposable);
+            srcA = Wrap(srcA);
+            srcB = Wrap(srcB);
 
             volA = new VolumeSampleProvider(srcA) { Volume = 0f };
             volB = new VolumeSampleProvider(srcB) { Volume = 0f };
@@ -68,13 +68,23 @@ namespace UltAssist.Audio
             volB = null;
             srcA = null;
             srcB = null;
+            srcADisposable?.Dispose();
+            srcBDisposable?.Dispose();
+            srcADisposable = null;
+            srcBDisposable = null;
         }
 
-        private AudioFileReader CreateReader(string file)
+        private ISampleProvider CreateReader(string file, out IDisposable disposable)
         {
             var reader = new AudioFileReader(file);
-            if (!loop) return reader;
-            return new LoopAudioFileReader(reader);
+            if (!loop)
+            {
+                disposable = reader;
+                return reader;
+            }
+            var looping = new LoopAudioFileReader(reader);
+            disposable = looping;
+            return looping;
         }
 
         private ISampleProvider Wrap(ISampleProvider src) => new LimiterSampleProvider(src);

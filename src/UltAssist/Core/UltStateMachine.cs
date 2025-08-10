@@ -1,8 +1,8 @@
 using NAudio.CoreAudioApi;
 using System;
-using System.Timers;
 using UltAssist.Audio;
 using UltAssist.Config;
+using Timer = System.Timers.Timer;
 
 namespace UltAssist.Core
 {
