@@ -15,6 +15,7 @@ namespace UltAssist.Core
         private readonly float fadeInMs;
         private readonly float fadeOutMs;
         private Timer? ttlTimer;
+        public event Action<bool>? PlayingStateChanged; // true: playing, false: stopped
 
         public UltStateMachine(MMDevice hp, MMDevice vm, float fadeInMs, float fadeOutMs)
         {
@@ -45,6 +46,7 @@ namespace UltAssist.Core
             player.Start(hero.AudioPath, hero.Volume);
 
             StartTtl(hero.MaxDurationMs);
+            PlayingStateChanged?.Invoke(true);
         }
 
         public void Stop()
@@ -55,6 +57,7 @@ namespace UltAssist.Core
             player?.StopSmooth();
             player?.Dispose();
             player = null;
+            PlayingStateChanged?.Invoke(false);
         }
 
         private void StartTtl(int ms)

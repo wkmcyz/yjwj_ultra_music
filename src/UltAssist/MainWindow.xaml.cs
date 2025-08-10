@@ -39,10 +39,18 @@ namespace UltAssist
             var vm = _audioService.GetDeviceByIdOrDefault(_config.VirtualMicDeviceId, DataFlow.Render);
             _stateMachine = new UltStateMachine(hp, vm, _config.FadeInMs, _config.FadeOutMs);
             _stateMachine.SetHero(CurrentHero());
+            _stateMachine.PlayingStateChanged += playing => Dispatcher.Invoke(() =>
+            {
+                StatusText.Text = playing ? "Playing" : "Idle";
+            });
 
             var interop = new WindowInteropHelper(this);
             _hotkey = new GlobalHotkey(interop.Handle, 0x56); // V
-            _hotkey.Pressed += () => Dispatcher.Invoke(() => _stateMachine.OnHotkey());
+            _hotkey.Pressed += () => Dispatcher.Invoke(() =>
+            {
+                LastHotkeyText.Text = DateTime.Now.ToString("HH:mm:ss.fff");
+                _stateMachine.OnHotkey();
+            });
         }
 
         private void MainWindow_Closed(object? sender, EventArgs e)

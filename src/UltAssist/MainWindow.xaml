@@ -36,6 +36,12 @@
                 <TextBox x:Name="FadeOutBox" Width="60" Text="150"/>
                 <Border Width="16"/>
                 <Button x:Name="SaveGlobalBtn" Content="保存全局" Width="100" Click="SaveGlobalBtn_Click"/>
+                <Border Width="16"/>
+                <TextBlock Text="状态：" VerticalAlignment="Center"/>
+                <TextBlock x:Name="StatusText" Text="Idle" Margin="6,0" VerticalAlignment="Center"/>
+                <Border Width="16"/>
+                <TextBlock Text="最近热键：" VerticalAlignment="Center"/>
+                <TextBlock x:Name="LastHotkeyText" Text="-" Margin="6,0" VerticalAlignment="Center"/>
             </StackPanel>
         </GroupBox>
 
