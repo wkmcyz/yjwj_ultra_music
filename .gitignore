@@ -18,3 +18,6 @@ obj/
 Thumbs.db
 
 
+# Python 数据集原始采集（不入库）
+python/raw/**
+!python/raw/.gitkeep
