@@ -1,0 +1,262 @@
+<Window x:Class="UltAssist.MainWindowV2"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="UltAssist V2 - 多按键音乐映射系统" Height="700" Width="900"
+        MinHeight="600" MinWidth="800">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        
+        <!-- 标题和状态栏 -->
+        <Border Grid.Row="0" Background="#2E3440" Padding="10,8">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                
+                <StackPanel Grid.Column="0" Orientation="Horizontal">
+                    <TextBlock Text="🎵 UltAssist V2" FontSize="16" FontWeight="Bold" Foreground="White" VerticalAlignment="Center"/>
+                    <Rectangle Width="1" Fill="#4C566A" Margin="15,0"/>
+                    <TextBlock Text="状态:" Foreground="#D8DEE9" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                    <TextBlock x:Name="StatusText" Text="就绪" Foreground="#A3BE8C" VerticalAlignment="Center" FontWeight="SemiBold"/>
+                </StackPanel>
+                
+                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                    <TextBlock Text="游戏窗口:" Foreground="#D8DEE9" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                    <TextBlock x:Name="GameWindowText" Text="未检测到" Foreground="#EBCB8B" VerticalAlignment="Center" FontWeight="SemiBold" Margin="0,0,15,0"/>
+                    <TextBlock Text="全局监听:" Foreground="#D8DEE9" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                    <TextBlock x:Name="GlobalEnabledText" Text="开启" Foreground="#A3BE8C" VerticalAlignment="Center" FontWeight="SemiBold"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- 主内容区域 -->
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+            <StackPanel Margin="15">
+                
+                <!-- ========== 1. 全局配置区域 ========== -->
+                <GroupBox Header="🌐 全局配置" FontSize="14" FontWeight="SemiBold" Margin="0,0,0,15">
+                    <Grid Margin="10">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        
+                        <!-- 设备选择 -->
+                        <StackPanel Grid.Row="0" Margin="0,0,0,15">
+                            <TextBlock Text="🎧 音频设备选择" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="15"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                
+                                <StackPanel Grid.Column="0">
+                                    <TextBlock Text="播放设备 (您听到的音频):" Margin="0,0,0,3"/>
+                                    <ComboBox x:Name="HeadphoneCombo" DisplayMemberPath="Name"/>
+                                </StackPanel>
+                                
+                                <StackPanel Grid.Column="2">
+                                    <TextBlock Text="虚拟设备 (队友听到的音频):" Margin="0,0,0,3"/>
+                                    <ComboBox x:Name="VirtualMicCombo" DisplayMemberPath="Name"/>
+                                </StackPanel>
+                            </Grid>
+                            
+                            <CheckBox x:Name="TempDefaultMicCheck" Content="运行时将默认麦克风切到虚拟麦" 
+                                     Margin="0,8,0,0" ToolTip="勾选后自动将系统默认录音设备切换到虚拟麦克风"/>
+                        </StackPanel>
+                        
+                        <!-- 监听范围配置 -->
+                        <StackPanel Grid.Row="1" Margin="0,0,0,15">
+                            <TextBlock Text="🎯 监听范围" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="15"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                
+                                <StackPanel Grid.Column="0">
+                                    <RadioButton x:Name="GameWindowOnlyRadio" Content="仅游戏窗口" IsChecked="True" 
+                                               ToolTip="只在永劫无间窗口激活时监听按键"/>
+                                    <RadioButton x:Name="GlobalListenRadio" Content="全局监听" Margin="0,5,0,0"
+                                               ToolTip="在任何窗口都监听按键"/>
+                                </StackPanel>
+                                
+                                <StackPanel Grid.Column="2">
+                                    <TextBlock Text="监听的游戏进程:" Margin="0,0,0,3"/>
+                                    <TextBox x:Name="GameProcessBox" Text="NarakaBladepoint.exe" 
+                                           ToolTip="多个进程用分号分隔，如: Game1.exe;Game2.exe"/>
+                                </StackPanel>
+                            </Grid>
+                        </StackPanel>
+                        
+                        <!-- 顶部指示栏配置 -->
+                        <StackPanel Grid.Row="2" Margin="0,0,0,15">
+                            <TextBlock Text="📊 顶部指示栏" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="15"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                
+                                <StackPanel Grid.Column="0">
+                                    <TextBlock Text="显示样式:" Margin="0,0,0,3"/>
+                                    <ComboBox x:Name="OverlayStyleCombo">
+                                        <ComboBoxItem Content="无" Tag="None"/>
+                                        <ComboBoxItem Content="开启/关闭状态" Tag="StatusOnly"/>
+                                        <ComboBoxItem Content="调试面板" Tag="DebugPanel"/>
+                                    </ComboBox>
+                                </StackPanel>
+                                
+                                <StackPanel Grid.Column="2">
+                                    <TextBlock Text="显示位置:" Margin="0,0,0,3"/>
+                                    <ComboBox x:Name="OverlayPositionCombo">
+                                        <ComboBoxItem Content="左上角" Tag="TopLeft"/>
+                                        <ComboBoxItem Content="右上角" Tag="TopRight"/>
+                                        <ComboBoxItem Content="中间顶部" Tag="TopCenter"/>
+                                    </ComboBox>
+                                </StackPanel>
+                            </Grid>
+                        </StackPanel>
+                        
+                        <!-- 保存按钮 -->
+                        <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right">
+                            <Button x:Name="SaveGlobalBtn" Content="💾 保存全局设置" Padding="15,8" 
+                                   Background="#5E81AC" Foreground="White" BorderThickness="0"
+                                   Click="SaveGlobalBtn_Click"/>
+                        </StackPanel>
+                    </Grid>
+                </GroupBox>
+
+                <!-- ========== 2. 配置切换&修改区域 ========== -->
+                <GroupBox Header="⚙️ 英雄配置管理" FontSize="14" FontWeight="SemiBold" Margin="0,0,0,15">
+                    <Grid Margin="10">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        
+                        <!-- 英雄选择和操作 -->
+                        <Grid Grid.Row="0" Margin="0,0,0,15">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            
+                            <StackPanel Grid.Column="0" Orientation="Horizontal">
+                                <TextBlock Text="当前英雄:" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                <ComboBox x:Name="HeroCombo" Width="150" SelectionChanged="HeroCombo_SelectionChanged"/>
+                                <TextBlock Text="最后按键:" VerticalAlignment="Center" Margin="25,0,8,0"/>
+                                <TextBlock x:Name="LastKeyText" Text="无" VerticalAlignment="Center" 
+                                         FontFamily="Consolas" Background="#ECEFF4" Padding="5,2"/>
+                                <TextBlock x:Name="LastKeyTimeText" Text="" VerticalAlignment="Center" 
+                                         Foreground="#5E81AC" Margin="8,0,0,0" FontSize="11"/>
+                            </StackPanel>
+                            
+                            <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                <Button x:Name="CopyConfigBtn" Content="📋 复制配置" Margin="0,0,5,0" Padding="8,5"
+                                       Click="CopyConfigBtn_Click"/>
+                                <Button x:Name="ImportConfigBtn" Content="📁 导入" Margin="0,0,5,0" Padding="8,5"
+                                       Click="ImportConfigBtn_Click"/>
+                                <Button x:Name="ExportConfigBtn" Content="💾 导出" Padding="8,5"
+                                       Click="ExportConfigBtn_Click"/>
+                            </StackPanel>
+                        </Grid>
+                        
+                        <!-- 当前播放状态 -->
+                        <Border Grid.Row="1" Background="#ECEFF4" CornerRadius="5" Padding="10,8" Margin="0,0,0,15">
+                            <StackPanel>
+                                <TextBlock Text="🎵 当前播放:" FontWeight="SemiBold" Margin="0,0,0,5"/>
+                                <TextBlock x:Name="CurrentlyPlayingText" Text="无" FontFamily="Consolas" 
+                                         Foreground="#2E3440" TextWrapping="Wrap"/>
+                                <Button x:Name="StopAllBtn" Content="⏹️ 停止所有" HorizontalAlignment="Right" 
+                                       Padding="8,3" Margin="0,5,0,0" Click="StopAllBtn_Click"/>
+                            </StackPanel>
+                        </Border>
+                        
+                        <!-- 按键映射列表 -->
+                        <Grid Grid.Row="2" Margin="0,0,0,15">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+                            
+                            <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,8">
+                                <TextBlock Text="🎹 按键映射" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                <Button x:Name="AddMappingBtn" Content="➕ 添加新映射" Margin="15,0,0,0" 
+                                       Padding="10,5" Background="#A3BE8C" Foreground="White" BorderThickness="0"
+                                       Click="AddMappingBtn_Click"/>
+                            </StackPanel>
+                            
+                            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" MaxHeight="250">
+                                <ItemsControl x:Name="KeyMappingsList">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Background="White" BorderBrush="#D8DEE9" BorderThickness="1" 
+                                                   CornerRadius="5" Margin="0,0,0,8" Padding="12">
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                        <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    
+                                                    <StackPanel Grid.Column="0" Margin="0,0,15,0">
+                                                        <TextBlock Text="{Binding KeyDisplayText}" FontFamily="Consolas" 
+                                                                 FontSize="14" FontWeight="SemiBold" Background="#5E81AC" 
+                                                                 Foreground="White" Padding="8,4" HorizontalAlignment="Center"/>
+                                                        <TextBlock Text="{Binding AudioFileName}" FontSize="11" 
+                                                                 HorizontalAlignment="Center" Margin="0,3,0,0" 
+                                                                 Foreground="#5E81AC"/>
+                                                    </StackPanel>
+                                                    
+                                                    <StackPanel Grid.Column="1">
+                                                        <TextBlock Text="{Binding DisplayName}" FontWeight="SemiBold" 
+                                                                 Margin="0,0,0,3"/>
+                                                        <TextBlock Text="{Binding SettingsText}" FontSize="11" 
+                                                                 Foreground="#5E81AC"/>
+                                                    </StackPanel>
+                                                    
+                                                    <StackPanel Grid.Column="2" Orientation="Horizontal">
+                                                        <Button Content="▶️ 测试" Padding="6,3" Margin="0,0,3,0"
+                                                               Tag="{Binding}" Click="TestMappingBtn_Click"/>
+                                                        <Button Content="✏️ 编辑" Padding="6,3" Margin="0,0,3,0"
+                                                               Tag="{Binding}" Click="EditMappingBtn_Click"/>
+                                                        <Button Content="🗑️ 删除" Padding="6,3" Background="#BF616A" 
+                                                               Foreground="White" BorderThickness="0"
+                                                               Tag="{Binding}" Click="DeleteMappingBtn_Click"/>
+                                                    </StackPanel>
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </ScrollViewer>
+                        </Grid>
+                    </Grid>
+                </GroupBox>
+
+                <!-- ========== 3. 自动截图辅助区域 (保留用于扩展) ========== -->
+                <GroupBox Header="📸 自动截图辅助 (保留功能)" FontSize="14" FontWeight="SemiBold">
+                    <StackPanel Margin="10">
+                        <TextBlock Text="此区域保留用于将来功能扩展，如自动截图、ROI选择等。" 
+                                 Foreground="#5E81AC" FontStyle="Italic"/>
+                        <Button x:Name="SelectRoiBtn" Content="🎯 选择ROI区域" Margin="0,10,0,0" 
+                               Padding="10,8" HorizontalAlignment="Left" Click="SelectRoiBtn_Click"/>
+                    </StackPanel>
+                </GroupBox>
+                
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</Window>

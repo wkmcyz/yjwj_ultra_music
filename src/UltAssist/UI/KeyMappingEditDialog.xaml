@@ -1,0 +1,123 @@
+<Window x:Class="UltAssist.KeyMappingEditDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="编辑按键映射" Height="450" Width="500"
+        WindowStartupLocation="CenterOwner" 
+        ResizeMode="NoResize">
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        
+        <!-- 标题 -->
+        <StackPanel Grid.Row="0" Margin="0,0,0,20">
+            <TextBlock Text="🎹 按键映射配置" FontSize="16" FontWeight="Bold" 
+                      HorizontalAlignment="Center" Margin="0,0,0,10"/>
+            <Border Background="#5E81AC" CornerRadius="5" Padding="10,5" HorizontalAlignment="Center">
+                <TextBlock x:Name="KeyDisplayText" Text="" FontFamily="Consolas" 
+                          FontSize="14" FontWeight="Bold" Foreground="White"/>
+            </Border>
+        </StackPanel>
+        
+        <!-- 配置区域 -->
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+            <StackPanel>
+                
+                <!-- 显示名称 -->
+                <GroupBox Header="显示名称" Margin="0,0,0,15">
+                    <StackPanel Margin="10">
+                        <TextBox x:Name="DisplayNameBox" 
+                                ToolTip="为此映射设置一个友好的名称（可选），如：大招音乐、技能音效等"/>
+                    </StackPanel>
+                </GroupBox>
+                
+                <!-- 音频文件 -->
+                <GroupBox Header="音频文件" Margin="0,0,0,15">
+                    <StackPanel Margin="10">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            
+                            <TextBox x:Name="AudioFileBox" Grid.Column="0" 
+                                    Margin="0,0,10,0" IsReadOnly="True"
+                                    ToolTip="选择要播放的音频文件"/>
+                            <Button x:Name="BrowseAudioBtn" Grid.Column="1" 
+                                   Content="📁 浏览" Padding="10,5"
+                                   Click="BrowseAudioBtn_Click"/>
+                        </Grid>
+                        
+                        <Button x:Name="TestAudioBtn" Content="▶️ 试听" 
+                               Margin="0,8,0,0" Padding="8,5" HorizontalAlignment="Left"
+                               Click="TestAudioBtn_Click"/>
+                    </StackPanel>
+                </GroupBox>
+                
+                <!-- 播放设置 -->
+                <GroupBox Header="播放设置" Margin="0,0,0,15">
+                    <Grid Margin="10">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        
+                        <!-- 音量 -->
+                        <StackPanel Grid.Row="0" Margin="0,0,0,10">
+                            <TextBlock Text="音量:" Margin="0,0,0,5"/>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <Slider x:Name="VolumeSlider" Grid.Column="0" 
+                                       Minimum="0" Maximum="1" Value="0.7" 
+                                       TickFrequency="0.1" IsSnapToTickEnabled="True"/>
+                                <TextBlock x:Name="VolumeText" Grid.Column="1" 
+                                          Text="70%" Margin="10,0,0,0" VerticalAlignment="Center"/>
+                            </Grid>
+                        </StackPanel>
+                        
+                        <!-- 淡入淡出 -->
+                        <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,10">
+                            <StackPanel Margin="0,0,20,0">
+                                <TextBlock Text="淡入时间 (ms):" Margin="0,0,0,3"/>
+                                <TextBox x:Name="FadeInBox" Text="200" Width="80"/>
+                            </StackPanel>
+                            <StackPanel>
+                                <TextBlock Text="淡出时间 (ms):" Margin="0,0,0,3"/>
+                                <TextBox x:Name="FadeOutBox" Text="150" Width="80"/>
+                            </StackPanel>
+                        </StackPanel>
+                        
+                        <!-- 循环和打断设置 -->
+                        <StackPanel Grid.Row="2" Margin="0,0,0,10">
+                            <CheckBox x:Name="LoopCheck" Content="循环播放" Margin="0,0,0,5"
+                                     ToolTip="勾选后音乐将循环播放直到被打断或手动停止"/>
+                            <CheckBox x:Name="InterruptibleCheck" Content="可被其他按键打断" IsChecked="True"
+                                     ToolTip="取消勾选后，此音乐播放时按其他按键不会停止当前音乐"/>
+                        </StackPanel>
+                    </Grid>
+                </GroupBox>
+                
+            </StackPanel>
+        </ScrollViewer>
+        
+        <!-- 按钮区域 -->
+        <StackPanel Grid.Row="2" Orientation="Horizontal" 
+                   HorizontalAlignment="Right" Margin="0,20,0,0">
+            <Button x:Name="CancelBtn" Content="取消" 
+                   Width="80" Height="32" Margin="0,0,10,0"
+                   Click="CancelBtn_Click"/>
+            <Button x:Name="SaveBtn" Content="保存" 
+                   Width="80" Height="32" 
+                   Background="#A3BE8C" Foreground="White" 
+                   BorderThickness="0"
+                   Click="SaveBtn_Click"/>
+        </StackPanel>
+    </Grid>
+</Window>
