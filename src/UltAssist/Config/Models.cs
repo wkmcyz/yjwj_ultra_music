@@ -45,6 +45,7 @@ namespace UltAssist.Config
         public List<HeroConfig> Heroes { get; set; } = new();
         public string CurrentHero { get; set; } = "Default";
         public VisionConfig Vision { get; set; } = new();
+        public bool TemporarilySetDefaultMic { get; set; } = false;
     }
 }
 

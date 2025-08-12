@@ -38,6 +38,8 @@
                 <Border Width="16"/>
                 <Button x:Name="SaveGlobalBtn" Content="保存全局" Width="100" Click="SaveGlobalBtn_Click"/>
                 <Border Width="16"/>
+                <CheckBox x:Name="TempDefaultMicCheck" Content="运行时将默认麦克风切到虚拟麦" VerticalAlignment="Center"/>
+                <Border Width="16"/>
                 <TextBlock Text="状态：" VerticalAlignment="Center"/>
                 <TextBlock x:Name="StatusText" Text="Idle" Margin="6,0" VerticalAlignment="Center"/>
                 <Border Width="16"/>

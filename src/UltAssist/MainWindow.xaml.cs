@@ -23,6 +23,7 @@ namespace UltAssist
         private System.Drawing.Rectangle? _roiRectPx;
         private RoiOverlayWindow? _overlay;
         private DatasetCaptureService _datasetCapture = new();
+        private string? _prevDefaultCaptureId; // 运行期保存原默认麦以便恢复
 
         public MainWindow()
         {
@@ -41,12 +42,18 @@ namespace UltAssist
             FadeOutBox.Text = _config.FadeOutMs.ToString();
             // 初始化视觉配置 UI 状态
             VisionEnableCheck.IsChecked = _config.Vision?.Enabled == true;
+            // 绑定“临时默认麦”事件
+            TempDefaultMicCheck.Checked += TempDefaultMicCheck_Checked;
+            TempDefaultMicCheck.Unchecked += TempDefaultMicCheck_Unchecked;
+            TempDefaultMicCheck.IsChecked = _config.TemporarilySetDefaultMic;
 
             var hp = _audioService.GetDeviceByIdOrDefault(_config.HeadphoneDeviceId, DataFlow.Render);
             var vm = _audioService.GetDeviceByIdOrDefault(_config.VirtualMicDeviceId, DataFlow.Render);
             _stateMachine = new UltStateMachine(hp, vm, _config.FadeInMs, _config.FadeOutMs);
             _stateMachine.SetHero(CurrentHero());
             _stateMachine.SetVision(_config.Vision);
+            // 启动时应用“临时默认麦”设置，确保系统默认录音为 CABLE Output
+            if (_config.TemporarilySetDefaultMic) ApplyTempDefaultMic();
             _stateMachine.PlayingStateChanged += playing => Dispatcher.Invoke(() =>
             {
                 StatusText.Text = playing ? "Playing" : "Idle";
@@ -68,6 +75,10 @@ namespace UltAssist
                 // 即时读取当前 UI 的视觉开关并同步到状态机，避免未点击“保存视觉配置”时不生效
                 _config.Vision.Enabled = VisionEnableCheck.IsChecked == true;
                 _stateMachine.SetVision(_config.Vision);
+                // 即时读取当前 UI 的音频设备
+                var hpNow = HeadphoneCombo.SelectedItem as MMDevice ?? _audioService.GetDeviceByIdOrDefault(_config.HeadphoneDeviceId, DataFlow.Render);
+                var vmNow = VirtualMicCombo.SelectedItem as MMDevice ?? _audioService.GetDeviceByIdOrDefault(_config.VirtualMicDeviceId, DataFlow.Render);
+                _stateMachine.SetDevices(hpNow, vmNow);
                 _stateMachine.OnHotkey();
             });
 
@@ -81,8 +92,52 @@ namespace UltAssist
 
         private void MainWindow_Closed(object? sender, EventArgs e)
         {
+            RestoreDefaultMic();
             _hotkey?.Dispose();
             _stateMachine?.Dispose();
+        }
+
+        private void RestoreDefaultMic()
+        {
+            try
+            {
+                if (!string.IsNullOrEmpty(_prevDefaultCaptureId))
+                {
+                    _audioService.TrySetDefaultDevice(_prevDefaultCaptureId);
+                    _prevDefaultCaptureId = null;
+                }
+            }
+            catch { }
+        }
+
+        private void TempDefaultMicCheck_Checked(object sender, RoutedEventArgs e)
+        {
+            _config.TemporarilySetDefaultMic = true;
+            ApplyTempDefaultMic();
+            ConfigService.Save(_config);
+        }
+
+        private void TempDefaultMicCheck_Unchecked(object sender, RoutedEventArgs e)
+        {
+            _config.TemporarilySetDefaultMic = false;
+            RestoreDefaultMic();
+            ConfigService.Save(_config);
+        }
+
+        private void ApplyTempDefaultMic()
+        {
+            try
+            {
+                var vm = VirtualMicCombo.SelectedItem as MMDevice
+                         ?? _audioService.GetDeviceByIdOrDefault(_config.VirtualMicDeviceId, DataFlow.Render);
+                if (vm == null) return;
+                var captureId = _audioService.FindLinkedCaptureId(vm);
+                if (string.IsNullOrEmpty(captureId)) return;
+                // 记录当前默认麦，便于恢复
+                _prevDefaultCaptureId ??= _audioService.GetDefaultEndpointId(DataFlow.Capture, Role.Multimedia);
+                _audioService.TrySetDefaultDevice(captureId);
+            }
+            catch { }
         }
 
         private void PopulateDevices()
@@ -138,6 +193,7 @@ namespace UltAssist
             _config.VirtualMicDeviceId = vm?.ID ?? string.Empty;
             if (int.TryParse(FadeInBox.Text, out var fi)) _config.FadeInMs = fi;
             if (int.TryParse(FadeOutBox.Text, out var fo)) _config.FadeOutMs = fo;
+            _config.TemporarilySetDefaultMic = TempDefaultMicCheck.IsChecked == true;
             ConfigService.Save(_config);
 
             // 重新应用到状态机
@@ -146,6 +202,9 @@ namespace UltAssist
             _stateMachine?.Dispose();
             _stateMachine = new UltStateMachine(hpDev, vmDev, _config.FadeInMs, _config.FadeOutMs);
             _stateMachine.SetHero(CurrentHero());
+
+            // 同步应用/恢复默认麦
+            if (_config.TemporarilySetDefaultMic) ApplyTempDefaultMic(); else RestoreDefaultMic();
 
             MessageBox.Show("已保存全局设置", "保存", MessageBoxButton.OK, MessageBoxImage.Information);
         }

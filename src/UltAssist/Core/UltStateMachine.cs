@@ -12,8 +12,8 @@ namespace UltAssist.Core
 {
     public sealed class UltStateMachine : IDisposable
     {
-        private readonly MMDevice headphone;
-        private readonly MMDevice virtualMic;
+        private MMDevice headphone;
+        private MMDevice virtualMic;
         private DualOutputPlayer? player;
         private HeroConfig? hero;
         private readonly float fadeInMs;
@@ -28,10 +28,15 @@ namespace UltAssist.Core
 
         public UltStateMachine(MMDevice hp, MMDevice vm, float fadeInMs, float fadeOutMs)
         {
-            headphone = hp;
-            virtualMic = vm;
+            SetDevices(hp, vm);
             this.fadeInMs = fadeInMs;
             this.fadeOutMs = fadeOutMs;
+        }
+
+        public void SetDevices(MMDevice hp, MMDevice vm)
+        {
+            headphone = hp;
+            virtualMic = vm;
         }
 
         public void SetHero(HeroConfig heroConfig)
@@ -55,15 +60,8 @@ namespace UltAssist.Core
             {
                 return;
             }
-            if (visionConfig == null || !visionConfig.Enabled)
-            {
-                StartPlayback();
-                return;
-            }
-
-            visionCts?.Cancel();
-            visionCts = new CancellationTokenSource();
-            _ = ConfirmAndMaybeStartAsync(visionCts.Token);
+            // 始终立即播放；视觉（若启用）仅用于播放期自动收尾
+            StartPlayback();
         }
 
         public void Stop()
