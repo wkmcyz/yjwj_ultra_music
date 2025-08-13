@@ -61,6 +61,8 @@ namespace UltAssist
 
             // 加载当前设置
             DisplayNameBox.Text = _keyMapping.DisplayName;
+            ExactMatchRadio.IsChecked = _keyMapping.ExactMatch;
+            ContainsMatchRadio.IsChecked = !_keyMapping.ExactMatch;
             AudioFileBox.Text = _keyMapping.Audio.FilePath;
             VolumeSlider.Value = _keyMapping.Audio.Volume;
             FadeInBox.Text = _keyMapping.Audio.FadeInMs.ToString();
@@ -134,6 +136,7 @@ namespace UltAssist
 
                 // 更新映射
                 _keyMapping.DisplayName = DisplayNameBox.Text?.Trim() ?? string.Empty;
+                _keyMapping.ExactMatch = ExactMatchRadio.IsChecked == true;
                 _keyMapping.Audio = CreateAudioSettings();
 
                 DialogResult = true;

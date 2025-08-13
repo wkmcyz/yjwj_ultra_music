@@ -5,6 +5,7 @@ using NAudio.CoreAudioApi;
 using UltAssist.Audio;
 using UltAssist.Config;
 using UltAssist.Input;
+using UltAssist.Logging;
 using UltAssist.Services;
 
 namespace UltAssist.Core
@@ -26,15 +27,21 @@ namespace UltAssist.Core
 
         // 属性
         public bool GlobalEnabled => _inputManager.GlobalEnabled;
+        public bool IsGlobalEnabled => _inputManager.GlobalEnabled; // 兼容属性
         public bool IsGameWindowActive => _inputManager.IsGameWindowActive;
         public List<string> CurrentlyPlayingFiles => _audioPlayer?.CurrentlyPlayingFiles ?? new();
         public string CurrentHero => _config.CurrentHero;
+        public AppConfigV2 Config => _config; // 公开配置访问
 
         public UltAssistCoreV2()
         {
+            EventLogger.LogSystemInfo("初始化开始", "正在启动UltAssistCoreV2");
+            
             _audioService = new AudioDeviceService();
             _inputManager = new InputManagerV2();
             _config = ConfigServiceV2.Load();
+
+            EventLogger.LogSystemInfo("配置加载", $"当前英雄={_config.CurrentHero}, 全局监听={_config.Global.GlobalListenerEnabled}");
 
             // 订阅输入事件
             _inputManager.KeyCombinationTriggered += OnKeyCombinationTriggered;
@@ -46,6 +53,8 @@ namespace UltAssist.Core
             
             // 应用配置
             ApplyConfiguration();
+            
+            EventLogger.LogSystemInfo("初始化完成", "UltAssistCoreV2启动成功");
         }
 
         public void LoadConfiguration()
@@ -212,31 +221,58 @@ namespace UltAssist.Core
 
         private void OnKeyCombinationTriggered(KeyCombination combination)
         {
+            var keyName = combination.ToDisplayString();
+            
             // 查找当前英雄的匹配映射
             var heroConfig = GetCurrentHeroConfig();
-            if (heroConfig == null) return;
+            if (heroConfig == null) 
+            {
+                EventLogger.LogKeyPress(keyName, false, _config.CurrentHero, "英雄配置不存在");
+                return;
+            }
 
-            // 按优先级排序：组合键优先于单键
+            // 查找匹配的映射（支持精准匹配和包含匹配）
             var matchingMappings = heroConfig.KeyMappings
-                .Where(m => m.Keys.Equals(combination))
-                .OrderByDescending(m => m.Keys.Keys.Count)
+                .Where(m => m.Keys.Matches(combination, m.ExactMatch))
+                .OrderByDescending(m => m.Keys.Keys.Count) // 优先级：更多按键的组合优先
+                .ThenByDescending(m => m.ExactMatch) // 相同按键数时，精准匹配优先
                 .ToList();
 
             var mapping = matchingMappings.FirstOrDefault();
             if (mapping != null)
             {
+                var mappingInfo = $"显示名={mapping.DisplayName}, 文件={mapping.Audio.FilePath}, 可打断={mapping.Audio.Interruptible}, 匹配模式={(mapping.ExactMatch ? "精准" : "包含")}";
+                EventLogger.LogKeyPress(keyName, true, _config.CurrentHero, mappingInfo);
+                
                 // 只有匹配到映射时才通知UI更新最后按键和播放音频
-                LastKeyPressedChanged?.Invoke(combination.ToDisplayString(), DateTime.Now);
+                LastKeyPressedChanged?.Invoke(keyName, DateTime.Now);
                 
                 if (_audioPlayer != null)
                 {
-                    _audioPlayer.PlayAudio(combination, mapping.Audio);
+                    try
+                    {
+                        EventLogger.LogEvent("AUDIO", "尝试播放", "按键={0}, 文件={1}", keyName, mapping.Audio.FilePath);
+                        _audioPlayer.PlayAudio(combination, mapping.Audio);
+                    }
+                    catch (Exception ex)
+                    {
+                        EventLogger.LogError("AUDIO", "PlayAudio", ex);
+                    }
                 }
+                else
+                {
+                    EventLogger.LogEvent("AUDIO", "播放失败", "AudioPlayer为null, 按键={0}", keyName);
+                }
+            }
+            else
+            {
+                EventLogger.LogKeyPress(keyName, false, _config.CurrentHero, $"无匹配映射 (共{heroConfig.KeyMappings.Count}个映射)");
             }
         }
 
         private void OnGlobalEnabledChanged(bool enabled)
         {
+            EventLogger.LogGlobalToggle(enabled, "按键触发");
             _config.Global.GlobalListenerEnabled = enabled;
             SaveConfiguration();
             GlobalEnabledChanged?.Invoke(enabled);
@@ -244,6 +280,7 @@ namespace UltAssist.Core
 
         private void OnGameWindowActiveChanged(bool isActive)
         {
+            EventLogger.LogGameWindow(isActive, string.Join(",", _config.Global.GameProcessNames));
             GameWindowActiveChanged?.Invoke(isActive);
         }
 

@@ -127,8 +127,16 @@
                             </Grid>
                         </StackPanel>
                         
-                        <!-- 保存按钮 -->
+                        <!-- 保存按钮和日志按钮 -->
                         <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right">
+                            <Button x:Name="OpenLogBtn" Content="📋 查看日志" Padding="10,8" Margin="0,0,8,0"
+                                   Background="#88C0D0" Foreground="White" BorderThickness="0"
+                                   ToolTip="打开当前会话日志文件"
+                                   Click="OpenLogBtn_Click"/>
+                            <Button x:Name="OpenLogDirBtn" Content="📁 日志目录" Padding="10,8" Margin="0,0,8,0"
+                                   Background="#81A1C1" Foreground="White" BorderThickness="0"
+                                   ToolTip="打开日志目录，查看历史日志"
+                                   Click="OpenLogDirBtn_Click"/>
                             <Button x:Name="SaveGlobalBtn" Content="💾 保存全局设置" Padding="15,8" 
                                    Background="#5E81AC" Foreground="White" BorderThickness="0"
                                    Click="SaveGlobalBtn_Click"/>

@@ -1,12 +1,15 @@
 using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using UltAssist.Config;
 using UltAssist.Core;
+using UltAssist.Logging;
+using UltAssist.UI;
 using UltAssist.Vision;
 
 namespace UltAssist
@@ -15,6 +18,7 @@ namespace UltAssist
     {
         private UltAssistCoreV2 _core = null!;
         private List<KeyMappingViewModel> _mappingViewModels = new();
+        private StatusOverlayWindow? _statusOverlay;
 
         public MainWindowV2()
         {
@@ -30,6 +34,9 @@ namespace UltAssist
                 // 初始化核心系统
                 _core = new UltAssistCoreV2();
                 ReconnectCoreEvents();
+
+                // 初始化状态栏
+                InitializeStatusOverlay();
 
                 // 初始化UI
                 InitializeUI();
@@ -52,6 +59,38 @@ namespace UltAssist
             _core.GameWindowActiveChanged += OnGameWindowActiveChanged;
             _core.PlayingAudiosChanged += OnPlayingAudiosChanged;
             _core.LastKeyPressedChanged += OnLastKeyPressed;
+        }
+
+        private void InitializeStatusOverlay()
+        {
+            try
+            {
+                _statusOverlay = new StatusOverlayWindow();
+                _statusOverlay.MinimizeMainWindow += OnMinimizeMainWindow;
+                _statusOverlay.CloseApplication += OnCloseApplication;
+                _statusOverlay.Show();
+                
+                // 初始化状态显示
+                UpdateStatusOverlay();
+            }
+            catch (Exception ex)
+            {
+                // 状态栏初始化失败时不影响主程序
+                Console.WriteLine($"状态栏初始化失败: {ex.Message}");
+            }
+        }
+
+        private void UpdateStatusOverlay()
+        {
+            if (_statusOverlay == null) return;
+            
+            _statusOverlay.UpdateListeningStatus(_core?.IsGlobalEnabled ?? false);
+            _statusOverlay.UpdateGameStatus(_core?.IsGameWindowActive ?? false);
+            
+            if (_core?.Config?.Global?.GameProcessNames?.Count > 0)
+            {
+                _statusOverlay.SetTargetProcessName(_core.Config.Global.GameProcessNames[0]);
+            }
         }
 
         private void InitializeUI()
@@ -328,6 +367,54 @@ namespace UltAssist
             selector.ShowDialog();
         }
 
+        private void OpenLogBtn_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var logFile = EventLogger.GetCurrentLogFile();
+                if (File.Exists(logFile))
+                {
+                    Process.Start(new ProcessStartInfo
+                    {
+                        FileName = logFile,
+                        UseShellExecute = true
+                    });
+                }
+                else
+                {
+                    MessageBox.Show("日志文件不存在", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"打开日志失败: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private void OpenLogDirBtn_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var logDir = EventLogger.GetLogDirectory();
+                if (Directory.Exists(logDir))
+                {
+                    Process.Start(new ProcessStartInfo
+                    {
+                        FileName = logDir,
+                        UseShellExecute = true
+                    });
+                }
+                else
+                {
+                    MessageBox.Show("日志目录不存在", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"打开日志目录失败: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
         private void OnGlobalEnabledChanged(bool enabled)
         {
             Dispatcher.Invoke(() =>
@@ -338,6 +425,9 @@ namespace UltAssist
                     new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(191, 97, 106));
                 
                 StatusText.Text = enabled ? "监听中" : "已暂停";
+                
+                // 更新状态栏
+                _statusOverlay?.UpdateListeningStatus(enabled);
             });
         }
 
@@ -349,6 +439,9 @@ namespace UltAssist
                 GameWindowText.Foreground = isActive ? 
                     new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(163, 190, 140)) : 
                     new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(235, 203, 139));
+                
+                // 更新状态栏
+                _statusOverlay?.UpdateGameStatus(isActive);
             });
         }
 
@@ -358,6 +451,9 @@ namespace UltAssist
             {
                 CurrentlyPlayingText.Text = playingFiles.Count > 0 ? 
                     string.Join(" | ", playingFiles) : "无";
+                
+                // 更新状态栏
+                _statusOverlay?.UpdatePlayingAudios(playingFiles.ToArray());
             });
         }
 
@@ -367,11 +463,31 @@ namespace UltAssist
             {
                 LastKeyText.Text = keyName;
                 LastKeyTimeText.Text = time.ToString("HH:mm:ss.fff");
+                
+                // 更新状态栏
+                _statusOverlay?.UpdateLastKey(keyName, time);
+            });
+        }
+
+        private void OnMinimizeMainWindow()
+        {
+            Dispatcher.Invoke(() =>
+            {
+                WindowState = WindowState.Minimized;
+            });
+        }
+
+        private void OnCloseApplication()
+        {
+            Dispatcher.Invoke(() =>
+            {
+                Application.Current.Shutdown();
             });
         }
 
         private void MainWindowV2_Closed(object? sender, EventArgs e)
         {
+            _statusOverlay?.Close();
             _core?.Dispose();
         }
     }
@@ -399,6 +515,7 @@ namespace UltAssist
             get
             {
                 var settings = new List<string>();
+                settings.Add(Mapping.ExactMatch ? "精准匹配" : "包含匹配");
                 if (Mapping.Audio.Loop) settings.Add("循环");
                 if (!Mapping.Audio.Interruptible) settings.Add("不可打断");
                 settings.Add($"音量 {Mapping.Audio.Volume:P0}");

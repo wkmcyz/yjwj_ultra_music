@@ -33,6 +33,18 @@
                     </StackPanel>
                 </GroupBox>
                 
+                <!-- 匹配模式 -->
+                <GroupBox Header="匹配模式" Margin="0,0,0,15">
+                    <StackPanel Margin="10">
+                        <RadioButton x:Name="ExactMatchRadio" Content="精准匹配" IsChecked="True" Margin="0,0,0,5"
+                                    ToolTip="只有完全一致的按键组合才触发（如：配置V，只有单独按V才触发）"/>
+                        <RadioButton x:Name="ContainsMatchRadio" Content="包含匹配" Margin="0,0,0,5"
+                                    ToolTip="按下的按键包含配置的按键就触发（如：配置V，按V+W+A等组合也会触发）"/>
+                        <TextBlock Text="💡 游戏中经常同时按多键时建议使用包含匹配" 
+                                  FontSize="11" FontStyle="Italic" Foreground="#5E81AC" Margin="0,5,0,0"/>
+                    </StackPanel>
+                </GroupBox>
+                
                 <!-- 音频文件 -->
                 <GroupBox Header="音频文件" Margin="0,0,0,15">
                     <StackPanel Margin="10">

@@ -70,6 +70,7 @@ namespace UltAssist.Config
         public KeyCombination Keys { get; set; } = new();
         public AudioSettings Audio { get; set; } = new();
         public string DisplayName { get; set; } = string.Empty; // 用户自定义别名
+        public bool ExactMatch { get; set; } = true; // 精准匹配：true=完全一致，false=包含匹配
     }
 
     public class KeyCombination
@@ -98,6 +99,21 @@ namespace UltAssist.Config
         public bool Contains(KeyCombination other)
         {
             return other.Keys.All(k => Keys.Contains(k));
+        }
+
+        // 根据匹配模式判断是否匹配
+        public bool Matches(KeyCombination other, bool exactMatch)
+        {
+            if (exactMatch)
+            {
+                // 精准匹配：完全一致
+                return Equals(other);
+            }
+            else
+            {
+                // 包含匹配：other包含当前配置的所有按键
+                return other.Contains(this);
+            }
         }
     }
 

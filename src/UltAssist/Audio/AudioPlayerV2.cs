@@ -8,6 +8,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using UltAssist.Config;
+using UltAssist.Logging;
 
 namespace UltAssist.Audio
 {
@@ -33,14 +34,26 @@ namespace UltAssist.Audio
 
         public void PlayAudio(KeyCombination triggeredKey, AudioSettings audioSettings)
         {
-            if (string.IsNullOrEmpty(audioSettings.FilePath) || !File.Exists(audioSettings.FilePath))
-                return;
-
             var keyId = triggeredKey.ToDisplayString();
+            
+            if (string.IsNullOrEmpty(audioSettings.FilePath))
+            {
+                EventLogger.LogAudioError(audioSettings.FilePath ?? "null", "文件路径为空");
+                return;
+            }
+            
+            if (!File.Exists(audioSettings.FilePath))
+            {
+                EventLogger.LogAudioError(audioSettings.FilePath, "文件不存在");
+                return;
+            }
+
+            EventLogger.LogAudioPlay(keyId, audioSettings.FilePath, "Current", audioSettings.Interruptible);
 
             // 检查重复按键：如果同一按键已在播放，先停止之前的
             if (_playingAudios.TryGetValue(keyId, out var existingAudio))
             {
+                EventLogger.LogEvent("AUDIO", "重复按键打断", "按键={0}, 原音频={1}", keyId, existingAudio.AudioSettings.FilePath);
                 StopAudio(keyId, immediate: true); // 立即停止，不淡出
             }
 
@@ -52,6 +65,7 @@ namespace UltAssist.Audio
 
             foreach (var interruptibleKey in interruptibleKeys)
             {
+                EventLogger.LogEvent("AUDIO", "可打断音频停止", "被打断按键={0}, 新按键={1}", interruptibleKey, keyId);
                 StopAudio(interruptibleKey, immediate: true);
             }
 
@@ -67,13 +81,18 @@ namespace UltAssist.Audio
                 
                 if (_playingAudios.TryAdd(keyId, playingAudio))
                 {
+                    EventLogger.LogEvent("AUDIO", "开始播放实例", "按键={0}, 当前播放数={1}", keyId, _playingAudios.Count);
                     playingAudio.Start();
                     NotifyPlayingAudiosChanged();
+                }
+                else
+                {
+                    EventLogger.LogEvent("AUDIO", "添加播放实例失败", "按键={0}, 可能已存在", keyId);
                 }
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"播放音频失败: {ex.Message}");
+                EventLogger.LogAudioError(audioSettings.FilePath, ex.Message);
             }
         }
 
@@ -81,6 +100,9 @@ namespace UltAssist.Audio
         {
             if (_playingAudios.TryRemove(keyId, out var audio))
             {
+                var reason = immediate ? "立即停止" : "淡出停止";
+                EventLogger.LogAudioStop(audio.AudioSettings.FilePath, $"{reason} (按键={keyId})");
+                
                 if (immediate)
                 {
                     audio.Stop();
@@ -106,6 +128,7 @@ namespace UltAssist.Audio
         {
             if (_playingAudios.TryRemove(keyId, out var audio))
             {
+                EventLogger.LogAudioStop(audio.AudioSettings.FilePath, $"播放完成 (按键={keyId})");
                 audio.Dispose();
                 NotifyPlayingAudiosChanged();
             }
