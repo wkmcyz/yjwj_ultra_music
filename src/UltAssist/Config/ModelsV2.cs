@@ -4,12 +4,12 @@ using System.Linq;
 
 namespace UltAssist.Config
 {
-    // V2 配置模型：从大招识别改为按键映射系统
+    // V2 配置模型：通用按键映射系统，适用于所有游戏
     public class AppConfigV2
     {
         public GlobalSettings Global { get; set; } = new();
-        public Dictionary<string, HeroConfigV2> HeroConfigs { get; set; } = new();
-        public string CurrentHero { get; set; } = string.Empty;
+        public List<ConfigProfile> Profiles { get; set; } = new();
+        public string CurrentProfile { get; set; } = string.Empty;
     }
 
     public class GlobalSettings
@@ -21,7 +21,7 @@ namespace UltAssist.Config
 
         // 监听配置
         public ListeningMode ListeningMode { get; set; } = ListeningMode.GameWindowOnly;
-        public List<string> GameProcessNames { get; set; } = new() { "NarakaBladepoint.exe" };
+        public List<string> GameProcessNames { get; set; } = new();
         public bool GlobalListenerEnabled { get; set; } = true; // Ctrl+1 开关状态
 
         // 顶部指示栏配置
@@ -58,9 +58,11 @@ namespace UltAssist.Config
         TopCenter
     }
 
-    public class HeroConfigV2
+    public class ConfigProfile
     {
+        public string Id { get; set; } = Guid.NewGuid().ToString();
         public string Name { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty; // 配置描述，如"永劫无间"、"CSGO"等
         public List<KeyMapping> KeyMappings { get; set; } = new();
     }
 
@@ -125,47 +127,5 @@ namespace UltAssist.Config
         public int FadeOutMs { get; set; } = 150;
         public bool Loop { get; set; } = false;
         public bool Interruptible { get; set; } = true; // 是否可被其他按键打断
-    }
-
-    // 默认配置生成器
-    public static class DefaultsV2
-    {
-        public static AppConfigV2 CreateDefault()
-        {
-            var config = new AppConfigV2();
-            
-            // 添加默认英雄配置
-            var defaultHeroes = new[]
-            {
-                "季沧海", "迦南", "妖刀姬", "武田信忠", "顾清寒", 
-                "胡桃", "无尘", "宁红夜", "特木尔", "崔三娘", 
-                "天海", "玉玲珑", "席拉", "岳山"
-            };
-
-            foreach (var hero in defaultHeroes)
-            {
-                config.HeroConfigs[hero] = new HeroConfigV2 { Name = hero };
-            }
-
-            config.CurrentHero = defaultHeroes[0];
-            return config;
-        }
-
-        public static KeyMapping CreateDefaultKeyMapping(string keys = "V")
-        {
-            return new KeyMapping
-            {
-                Keys = new KeyCombination { Keys = new List<string> { keys } },
-                Audio = new AudioSettings
-                {
-                    Volume = 0.7f,
-                    FadeInMs = 200,
-                    FadeOutMs = 150,
-                    Loop = false,
-                    Interruptible = true
-                },
-                DisplayName = $"默认 {keys} 键"
-            };
-        }
     }
 }

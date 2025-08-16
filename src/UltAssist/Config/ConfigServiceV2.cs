@@ -22,7 +22,7 @@ namespace UltAssist.Config
             {
                 if (!File.Exists(ConfigPath))
                 {
-                    var defaultConfig = DefaultsV2.CreateDefault();
+                    var defaultConfig = CreateDefaultConfig();
                     Save(defaultConfig);
                     return defaultConfig;
                 }
@@ -32,7 +32,7 @@ namespace UltAssist.Config
                 
                 if (config == null)
                 {
-                    return DefaultsV2.CreateDefault();
+                    return CreateDefaultConfig();
                 }
 
                 // 配置验证和修复
@@ -42,7 +42,7 @@ namespace UltAssist.Config
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"配置加载失败: {ex.Message}");
-                return DefaultsV2.CreateDefault();
+                return CreateDefaultConfig();
             }
         }
 
@@ -63,35 +63,37 @@ namespace UltAssist.Config
         {
             // 确保有基本的全局设置
             config.Global ??= new GlobalSettings();
-            config.HeroConfigs ??= new();
+            config.Profiles ??= new();
 
-            // 确保有默认英雄
-            if (config.HeroConfigs.Count == 0)
+            // 确保当前配置有效
+            if (!string.IsNullOrEmpty(config.CurrentProfile))
             {
-                var defaultConfig = DefaultsV2.CreateDefault();
-                config.HeroConfigs = defaultConfig.HeroConfigs;
-                config.CurrentHero = defaultConfig.CurrentHero;
+                var currentProfile = config.Profiles.FirstOrDefault(p => p.Id == config.CurrentProfile);
+                if (currentProfile == null)
+                {
+                    config.CurrentProfile = string.Empty;
+                }
             }
 
-            // 确保当前英雄有效
-            if (string.IsNullOrEmpty(config.CurrentHero) || !config.HeroConfigs.ContainsKey(config.CurrentHero))
+            // 如果没有当前配置且有配置列表，选择第一个
+            if (string.IsNullOrEmpty(config.CurrentProfile) && config.Profiles.Count > 0)
             {
-                config.CurrentHero = config.HeroConfigs.Keys.First();
+                config.CurrentProfile = config.Profiles[0].Id;
             }
 
-            // 验证游戏进程名列表
-            if (config.Global.GameProcessNames.Count == 0)
+            // 验证每个配置文件
+            foreach (var profile in config.Profiles)
             {
-                config.Global.GameProcessNames.Add("NarakaBladepoint.exe");
-            }
-
-            // 验证每个英雄配置
-            foreach (var heroConfig in config.HeroConfigs.Values)
-            {
-                heroConfig.KeyMappings ??= new();
+                profile.KeyMappings ??= new();
+                
+                // 确保配置有ID
+                if (string.IsNullOrEmpty(profile.Id))
+                {
+                    profile.Id = Guid.NewGuid().ToString();
+                }
                 
                 // 为每个按键映射生成ID（如果没有）
-                foreach (var mapping in heroConfig.KeyMappings)
+                foreach (var mapping in profile.KeyMappings)
                 {
                     if (string.IsNullOrEmpty(mapping.Id))
                     {
@@ -109,6 +111,16 @@ namespace UltAssist.Config
                     mapping.Audio.FadeOutMs = Math.Max(0, mapping.Audio.FadeOutMs);
                 }
             }
+        }
+
+        private static AppConfigV2 CreateDefaultConfig()
+        {
+            return new AppConfigV2
+            {
+                Global = new GlobalSettings(),
+                Profiles = new List<ConfigProfile>(),
+                CurrentProfile = string.Empty
+            };
         }
 
         // 导出配置到指定文件

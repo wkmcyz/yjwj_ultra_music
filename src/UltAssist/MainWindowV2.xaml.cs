@@ -129,11 +129,11 @@ namespace UltAssist
             // 加载全局设置
             LoadGlobalSettings(config.Global);
             
-            // 加载英雄列表
-            LoadHeroList(config);
+            // 加载方案列表
+            LoadProfileList(config);
             
-            // 加载当前英雄的按键映射
-            LoadCurrentHeroMappings();
+            // 加载当前方案的按键映射
+            LoadCurrentProfileMappings();
         }
 
         private void LoadGlobalSettings(GlobalSettings global)
@@ -165,18 +165,28 @@ namespace UltAssist
                 new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(191, 97, 106));
         }
 
-        private void LoadHeroList(AppConfigV2 config)
+        private void LoadProfileList(AppConfigV2 config)
         {
-            HeroCombo.ItemsSource = config.HeroConfigs.Keys.ToList();
-            HeroCombo.SelectedItem = config.CurrentHero;
+            var profileItems = config.Profiles.Select(p => new ProfileDisplayItem 
+            { 
+                Id = p.Id, 
+                Name = p.Name, 
+                Description = p.Description,
+                Profile = p
+            }).ToList();
+            
+            HeroCombo.ItemsSource = profileItems;
+            HeroCombo.DisplayMemberPath = "DisplayName";
+            HeroCombo.SelectedValuePath = "Id";
+            HeroCombo.SelectedValue = config.CurrentProfile;
         }
 
-        private void LoadCurrentHeroMappings()
+        private void LoadCurrentProfileMappings()
         {
-            var heroConfig = _core.GetCurrentHeroConfig();
-            if (heroConfig == null) return;
+            var profile = _core.GetCurrentProfile();
+            if (profile == null) return;
 
-            _mappingViewModels = heroConfig.KeyMappings.Select(m => new KeyMappingViewModel(m)).ToList();
+            _mappingViewModels = profile.KeyMappings.Select(m => new KeyMappingViewModel(m)).ToList();
             KeyMappingsList.ItemsSource = _mappingViewModels;
         }
 
@@ -216,10 +226,10 @@ namespace UltAssist
 
         private void HeroCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (HeroCombo.SelectedItem is string heroName)
+            if (HeroCombo.SelectedItem is ProfileDisplayItem profileItem)
             {
-                _core.UpdateCurrentHero(heroName);
-                LoadCurrentHeroMappings();
+                _core.SwitchProfile(profileItem.Id);
+                LoadCurrentProfileMappings();
             }
         }
 
@@ -234,8 +244,8 @@ namespace UltAssist
                     var mappingDialog = new KeyMappingEditDialog(dialog.RecordedKey);
                     if (mappingDialog.ShowDialog() == true)
                     {
-                        _core.AddKeyMapping(_core.CurrentHero, mappingDialog.KeyMapping);
-                        LoadCurrentHeroMappings();
+                        _core.AddKeyMapping(_core.CurrentProfile, mappingDialog.KeyMapping);
+                        LoadCurrentProfileMappings();
                     }
                 }
             }
@@ -262,8 +272,8 @@ namespace UltAssist
                 {
                     try
                     {
-                        _core.UpdateKeyMapping(_core.CurrentHero, dialog.KeyMapping);
-                        LoadCurrentHeroMappings();
+                        _core.UpdateKeyMapping(_core.CurrentProfile, dialog.KeyMapping);
+                        LoadCurrentProfileMappings();
                     }
                     catch (Exception ex)
                     {
@@ -282,8 +292,8 @@ namespace UltAssist
                 
                 if (result == MessageBoxResult.Yes)
                 {
-                    _core.RemoveKeyMapping(_core.CurrentHero, vm.Mapping.Id);
-                    LoadCurrentHeroMappings();
+                    _core.RemoveKeyMapping(_core.CurrentProfile, vm.Mapping.Id);
+                    LoadCurrentProfileMappings();
                 }
             }
         }
@@ -291,6 +301,68 @@ namespace UltAssist
         private void StopAllBtn_Click(object sender, RoutedEventArgs e)
         {
             _core.StopAllAudios();
+        }
+
+        private void AddProfileBtn_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                // 创建新方案对话框
+                var dialog = new ProfileEditDialog();
+                if (dialog.ShowDialog() == true)
+                {
+                    var newProfile = new ConfigProfile
+                    {
+                        Id = Guid.NewGuid().ToString(),
+                        Name = dialog.ProfileName,
+                        Description = dialog.ProfileDescription,
+                        KeyMappings = new List<KeyMapping>()
+                    };
+
+                    _core.AddProfile(newProfile);
+                    _core.SwitchProfile(newProfile.Id);
+                    
+                    LoadProfileList(_core.Config);
+                    LoadCurrentProfileMappings();
+                    
+                    MessageBox.Show($"方案 \"{newProfile.Name}\" 创建成功！", "新增方案", 
+                        MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"创建方案失败: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private void DeleteProfileBtn_Click(object sender, RoutedEventArgs e)
+        {
+            if (HeroCombo.SelectedItem is ProfileDisplayItem profileItem)
+            {
+                var result = MessageBox.Show($"确定要删除方案 \"{profileItem.Name}\" 吗？\n\n此操作将删除该方案下的所有按键映射，且无法撤销。", 
+                    "确认删除", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+                
+                if (result == MessageBoxResult.Yes)
+                {
+                    try
+                    {
+                        _core.RemoveProfile(profileItem.Id);
+                        LoadProfileList(_core.Config);
+                        LoadCurrentProfileMappings();
+                        
+                        MessageBox.Show($"方案 \"{profileItem.Name}\" 已删除", "删除成功", 
+                            MessageBoxButton.OK, MessageBoxImage.Information);
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show($"删除方案失败: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+                    }
+                }
+            }
+            else
+            {
+                MessageBox.Show("请先选择要删除的方案", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
         }
 
         private void CopyConfigBtn_Click(object sender, RoutedEventArgs e)
@@ -533,5 +605,18 @@ namespace UltAssist
         public NAudio.CoreAudioApi.MMDevice Device { get; set; } = null!;
         
         public override string ToString() => Name;
+    }
+
+    // 配置文件显示项
+    public class ProfileDisplayItem
+    {
+        public string Id { get; set; } = string.Empty;
+        public string Name { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
+        public ConfigProfile Profile { get; set; } = null!;
+        
+        public string DisplayName => string.IsNullOrEmpty(Description) ? Name : $"{Name} ({Description})";
+        
+        public override string ToString() => DisplayName;
     }
 }

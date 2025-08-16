@@ -30,7 +30,7 @@ namespace UltAssist.Core
         public bool IsGlobalEnabled => _inputManager.GlobalEnabled; // 兼容属性
         public bool IsGameWindowActive => _inputManager.IsGameWindowActive;
         public List<string> CurrentlyPlayingFiles => _audioPlayer?.CurrentlyPlayingFiles ?? new();
-        public string CurrentHero => _config.CurrentHero;
+        public string CurrentProfile => _config.CurrentProfile;
         public AppConfigV2 Config => _config; // 公开配置访问
 
         public UltAssistCoreV2()
@@ -41,7 +41,7 @@ namespace UltAssist.Core
             _inputManager = new InputManagerV2();
             _config = ConfigServiceV2.Load();
 
-            EventLogger.LogSystemInfo("配置加载", $"当前英雄={_config.CurrentHero}, 全局监听={_config.Global.GlobalListenerEnabled}");
+            EventLogger.LogSystemInfo("配置加载", $"当前配置={_config.CurrentProfile}, 全局监听={_config.Global.GlobalListenerEnabled}");
 
             // 订阅输入事件
             _inputManager.KeyCombinationTriggered += OnKeyCombinationTriggered;
@@ -77,79 +77,113 @@ namespace UltAssist.Core
             SaveConfiguration();
         }
 
-        public void UpdateCurrentHero(string heroName)
+        public void SwitchProfile(string profileId)
         {
-            if (_config.HeroConfigs.ContainsKey(heroName))
+            var profile = _config.Profiles.FirstOrDefault(p => p.Id == profileId);
+            if (profile != null)
             {
-                _config.CurrentHero = heroName;
+                _config.CurrentProfile = profileId;
                 SaveConfiguration();
             }
         }
 
-        public HeroConfigV2? GetCurrentHeroConfig()
+        public ConfigProfile? GetCurrentProfile()
         {
-            return _config.HeroConfigs.TryGetValue(_config.CurrentHero, out var hero) ? hero : null;
+            return _config.Profiles.FirstOrDefault(p => p.Id == _config.CurrentProfile);
         }
 
-        public void UpdateHeroConfig(string heroName, HeroConfigV2 heroConfig)
+        public void UpdateProfile(ConfigProfile profile)
         {
-            _config.HeroConfigs[heroName] = heroConfig;
-            SaveConfiguration();
-        }
-
-        public void AddKeyMapping(string heroName, KeyMapping mapping)
-        {
-            if (!_config.HeroConfigs.TryGetValue(heroName, out var heroConfig))
+            var existingProfile = _config.Profiles.FirstOrDefault(p => p.Id == profile.Id);
+            if (existingProfile != null)
             {
-                heroConfig = new HeroConfigV2 { Name = heroName };
-                _config.HeroConfigs[heroName] = heroConfig;
-            }
-
-            // 检查按键冲突
-            if (HasKeyConflict(heroName, mapping.Keys))
-            {
-                throw new InvalidOperationException($"按键组合 {mapping.Keys.ToDisplayString()} 已存在");
-            }
-
-            heroConfig.KeyMappings.Add(mapping);
-            SaveConfiguration();
-        }
-
-        public void RemoveKeyMapping(string heroName, string mappingId)
-        {
-            if (_config.HeroConfigs.TryGetValue(heroName, out var heroConfig))
-            {
-                heroConfig.KeyMappings.RemoveAll(m => m.Id == mappingId);
+                var index = _config.Profiles.IndexOf(existingProfile);
+                _config.Profiles[index] = profile;
                 SaveConfiguration();
             }
         }
 
-        public void UpdateKeyMapping(string heroName, KeyMapping mapping)
+        public void AddProfile(ConfigProfile profile)
         {
-            if (_config.HeroConfigs.TryGetValue(heroName, out var heroConfig))
+            _config.Profiles.Add(profile);
+            if (string.IsNullOrEmpty(_config.CurrentProfile))
             {
-                var index = heroConfig.KeyMappings.FindIndex(m => m.Id == mapping.Id);
+                _config.CurrentProfile = profile.Id;
+            }
+            SaveConfiguration();
+        }
+
+        public void RemoveProfile(string profileId)
+        {
+            var profile = _config.Profiles.FirstOrDefault(p => p.Id == profileId);
+            if (profile != null)
+            {
+                _config.Profiles.Remove(profile);
+                
+                // 如果删除的是当前配置，切换到第一个可用配置
+                if (_config.CurrentProfile == profileId)
+                {
+                    _config.CurrentProfile = _config.Profiles.Count > 0 ? _config.Profiles[0].Id : string.Empty;
+                }
+                
+                SaveConfiguration();
+            }
+        }
+
+        public void AddKeyMapping(string profileId, KeyMapping mapping)
+        {
+            var profile = _config.Profiles.FirstOrDefault(p => p.Id == profileId);
+            if (profile != null)
+            {
+                // 检查按键冲突
+                if (HasKeyConflict(profileId, mapping.Keys))
+                {
+                    throw new InvalidOperationException($"按键组合 {mapping.Keys.ToDisplayString()} 已存在");
+                }
+
+                profile.KeyMappings.Add(mapping);
+                SaveConfiguration();
+            }
+        }
+
+        public void RemoveKeyMapping(string profileId, string mappingId)
+        {
+            var profile = _config.Profiles.FirstOrDefault(p => p.Id == profileId);
+            if (profile != null)
+            {
+                profile.KeyMappings.RemoveAll(m => m.Id == mappingId);
+                SaveConfiguration();
+            }
+        }
+
+        public void UpdateKeyMapping(string profileId, KeyMapping mapping)
+        {
+            var profile = _config.Profiles.FirstOrDefault(p => p.Id == profileId);
+            if (profile != null)
+            {
+                var index = profile.KeyMappings.FindIndex(m => m.Id == mapping.Id);
                 if (index >= 0)
                 {
                     // 检查按键冲突（排除自己）
-                    var otherMappings = heroConfig.KeyMappings.Where(m => m.Id != mapping.Id);
+                    var otherMappings = profile.KeyMappings.Where(m => m.Id != mapping.Id);
                     if (otherMappings.Any(m => m.Keys.Equals(mapping.Keys)))
                     {
                         throw new InvalidOperationException($"按键组合 {mapping.Keys.ToDisplayString()} 已存在");
                     }
 
-                    heroConfig.KeyMappings[index] = mapping;
+                    profile.KeyMappings[index] = mapping;
                     SaveConfiguration();
                 }
             }
         }
 
-        public bool HasKeyConflict(string heroName, KeyCombination keys)
+        public bool HasKeyConflict(string profileId, KeyCombination keys)
         {
-            if (!_config.HeroConfigs.TryGetValue(heroName, out var heroConfig))
+            var profile = _config.Profiles.FirstOrDefault(p => p.Id == profileId);
+            if (profile == null)
                 return false;
 
-            return heroConfig.KeyMappings.Any(m => m.Keys.Equals(keys));
+            return profile.KeyMappings.Any(m => m.Keys.Equals(keys));
         }
 
         public void TestPlayMapping(KeyMapping mapping)
@@ -223,16 +257,16 @@ namespace UltAssist.Core
         {
             var keyName = combination.ToDisplayString();
             
-            // 查找当前英雄的匹配映射
-            var heroConfig = GetCurrentHeroConfig();
-            if (heroConfig == null) 
+            // 查找当前配置文件的匹配映射
+            var profile = GetCurrentProfile();
+            if (profile == null) 
             {
-                EventLogger.LogKeyPress(keyName, false, _config.CurrentHero, "英雄配置不存在");
+                EventLogger.LogKeyPress(keyName, false, _config.CurrentProfile, "配置文件不存在");
                 return;
             }
 
             // 查找匹配的映射（支持精准匹配和包含匹配）
-            var matchingMappings = heroConfig.KeyMappings
+            var matchingMappings = profile.KeyMappings
                 .Where(m => m.Keys.Matches(combination, m.ExactMatch))
                 .OrderByDescending(m => m.Keys.Keys.Count) // 优先级：更多按键的组合优先
                 .ThenByDescending(m => m.ExactMatch) // 相同按键数时，精准匹配优先
@@ -242,7 +276,7 @@ namespace UltAssist.Core
             if (mapping != null)
             {
                 var mappingInfo = $"显示名={mapping.DisplayName}, 文件={mapping.Audio.FilePath}, 可打断={mapping.Audio.Interruptible}, 匹配模式={(mapping.ExactMatch ? "精准" : "包含")}";
-                EventLogger.LogKeyPress(keyName, true, _config.CurrentHero, mappingInfo);
+                EventLogger.LogKeyPress(keyName, true, _config.CurrentProfile, mappingInfo);
                 
                 // 只有匹配到映射时才通知UI更新最后按键和播放音频
                 LastKeyPressedChanged?.Invoke(keyName, DateTime.Now);
@@ -266,7 +300,7 @@ namespace UltAssist.Core
             }
             else
             {
-                EventLogger.LogKeyPress(keyName, false, _config.CurrentHero, $"无匹配映射 (共{heroConfig.KeyMappings.Count}个映射)");
+                EventLogger.LogKeyPress(keyName, false, _config.CurrentProfile, $"无匹配映射 (共{profile.KeyMappings.Count}个映射)");
             }
         }
 

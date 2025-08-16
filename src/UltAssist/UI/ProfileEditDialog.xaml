@@ -1,0 +1,61 @@
+<Window x:Class="UltAssist.UI.ProfileEditDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="新增方案" Height="500" Width="450"
+        WindowStartupLocation="CenterOwner" 
+        ResizeMode="NoResize">
+    
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        
+        <!-- 标题 -->
+        <StackPanel Grid.Row="0" Margin="0,0,0,25">
+            <TextBlock Text="📁 新增方案配置" FontSize="16" FontWeight="Bold" 
+                      HorizontalAlignment="Center" Margin="0,0,0,15"/>
+            <TextBlock Text="为新的游戏或应用创建一个按键映射方案" 
+                      HorizontalAlignment="Center" Foreground="#5E81AC" FontSize="12"/>
+        </StackPanel>
+        
+        <!-- 配置区域 -->
+        <StackPanel Grid.Row="1">
+            
+            <!-- 方案名称 -->
+            <GroupBox Header="方案名称" Margin="0,0,0,20">
+                <StackPanel Margin="15">
+                    <TextBox x:Name="ProfileNameBox" Height="32" FontSize="12"
+                            ToolTip="输入方案名称，如：永劫无间、CSGO、英雄联盟等"/>
+                    <TextBlock Text="💡 为游戏或应用起一个易识别的名称" 
+                              FontSize="10" Foreground="#5E81AC" Margin="0,5,0,0"/>
+                </StackPanel>
+            </GroupBox>
+            
+            <!-- 方案描述 -->
+            <GroupBox Header="方案描述 (可选)" Margin="0,0,0,20">
+                <StackPanel Margin="15">
+                    <TextBox x:Name="ProfileDescriptionBox" Height="32" FontSize="12"
+                            ToolTip="输入方案描述，如：竞技模式、休闲模式、训练模式等"/>
+                    <TextBlock Text="💡 添加描述信息帮助区分不同用途的配置" 
+                              FontSize="10" Foreground="#5E81AC" Margin="0,5,0,0"/>
+                </StackPanel>
+            </GroupBox>
+            
+        </StackPanel>
+        
+        <!-- 按钮区域 -->
+        <StackPanel Grid.Row="2" Orientation="Horizontal" 
+                   HorizontalAlignment="Right" Margin="0,30,0,0">
+            <Button x:Name="CancelBtn" Content="取消" 
+                   Width="80" Height="32" Margin="0,0,10,0"
+                   Click="CancelBtn_Click"/>
+            <Button x:Name="SaveBtn" Content="创建" 
+                   Width="80" Height="32" 
+                   Background="#A3BE8C" Foreground="White" 
+                   BorderThickness="0"
+                   Click="SaveBtn_Click"/>
+        </StackPanel>
+    </Grid>
+</Window>

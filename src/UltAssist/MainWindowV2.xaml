@@ -145,7 +145,7 @@
                 </GroupBox>
 
                 <!-- ========== 2. 配置切换&修改区域 ========== -->
-                <GroupBox Header="⚙️ 英雄配置管理" FontSize="14" FontWeight="SemiBold" Margin="0,0,0,15">
+                <GroupBox Header="⚙️ 方案配置管理" FontSize="14" FontWeight="SemiBold" Margin="0,0,0,15">
                     <Grid Margin="10">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto"/>
@@ -154,7 +154,7 @@
                             <RowDefinition Height="Auto"/>
                         </Grid.RowDefinitions>
                         
-                        <!-- 英雄选择和操作 -->
+                        <!-- 方案选择和操作 -->
                         <Grid Grid.Row="0" Margin="0,0,0,15">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
@@ -162,7 +162,7 @@
                             </Grid.ColumnDefinitions>
                             
                             <StackPanel Grid.Column="0" Orientation="Horizontal">
-                                <TextBlock Text="当前英雄:" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                <TextBlock Text="当前方案:" VerticalAlignment="Center" Margin="0,0,8,0"/>
                                 <ComboBox x:Name="HeroCombo" Width="150" SelectionChanged="HeroCombo_SelectionChanged"/>
                                 <TextBlock Text="最后按键:" VerticalAlignment="Center" Margin="25,0,8,0"/>
                                 <TextBlock x:Name="LastKeyText" Text="无" VerticalAlignment="Center" 
@@ -172,6 +172,11 @@
                             </StackPanel>
                             
                             <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                <Button x:Name="AddProfileBtn" Content="➕ 新增方案" Margin="0,0,5,0" Padding="8,5"
+                                       Click="AddProfileBtn_Click"/>
+                                <Button x:Name="DeleteProfileBtn" Content="🗑️ 删除方案" Margin="0,0,5,0" Padding="8,5"
+                                       Click="DeleteProfileBtn_Click"/>
+                                <Separator Margin="10,0" />
                                 <Button x:Name="CopyConfigBtn" Content="📋 复制配置" Margin="0,0,5,0" Padding="8,5"
                                        Click="CopyConfigBtn_Click"/>
                                 <Button x:Name="ImportConfigBtn" Content="📁 导入" Margin="0,0,5,0" Padding="8,5"

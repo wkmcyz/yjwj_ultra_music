@@ -69,15 +69,15 @@ namespace UltAssist.Logging
         public static void LogKeyPress(string keyName, bool hasMapping, string heroName, string mappingInfo = "")
         {
             var details = hasMapping 
-                ? $"按键={keyName}, 英雄={heroName}, 映射={mappingInfo}"
-                : $"按键={keyName}, 英雄={heroName}, 无映射";
+                ? $"按键={keyName}, 方案={heroName}, 映射={mappingInfo}"
+                : $"按键={keyName}, 方案={heroName}, 无映射";
             
             LogEvent("INPUT", hasMapping ? "按键触发" : "按键无映射", details);
         }
 
         public static void LogAudioPlay(string keyName, string audioFile, string heroName, bool isInterruptible)
         {
-            LogEvent("AUDIO", "开始播放", "按键={0}, 文件={1}, 英雄={2}, 可打断={3}", 
+            LogEvent("AUDIO", "开始播放", "按键={0}, 文件={1}, 方案={2}, 可打断={3}", 
                 keyName, Path.GetFileName(audioFile), heroName, isInterruptible);
         }
 
