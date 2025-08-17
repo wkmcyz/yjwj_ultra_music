@@ -5,6 +5,7 @@ using System.Windows.Forms;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
+using UltAssist.Config;
 
 namespace UltAssist.UI
 {
@@ -48,6 +49,7 @@ namespace UltAssist.UI
 
         private readonly DispatcherTimer _positionUpdateTimer;
         private string _targetProcessName = "NarakaBladepoint.exe";
+        private OverlayStyle _currentStyle = OverlayStyle.None;
 
         public event Action? MinimizeMainWindow;
         public event Action? CloseApplication;
@@ -69,6 +71,9 @@ namespace UltAssist.UI
             
             // 初始位置
             UpdatePosition(null, null);
+            
+            // 初始状态为隐藏（等待设置显示样式）
+            Hide();
         }
 
         public void SetTargetProcessName(string processName)
@@ -76,19 +81,70 @@ namespace UltAssist.UI
             _targetProcessName = processName;
         }
 
+        public void SetDisplayStyle(OverlayStyle style)
+        {
+            _currentStyle = style;
+            System.Diagnostics.Debug.WriteLine($"StatusOverlay: Setting display style to {style}");
+            UpdateDisplayMode();
+        }
+
+        private void UpdateDisplayMode()
+        {
+            Dispatcher.Invoke(() =>
+            {
+                // 隐藏所有模式
+                SimpleMode.Visibility = Visibility.Collapsed;
+                CompleteMode.Visibility = Visibility.Collapsed;
+
+                switch (_currentStyle)
+                {
+                    case OverlayStyle.None:
+                        Hide();
+                        break;
+
+                    case OverlayStyle.StatusOnly:
+                        SimpleMode.Visibility = Visibility.Visible;
+                        Width = 200;
+                        Height = 50;
+                        Show();
+                        break;
+
+                    case OverlayStyle.DebugPanel:
+                        CompleteMode.Visibility = Visibility.Visible;
+                        Width = 400;
+                        Height = 80;
+                        Show();
+                        break;
+                }
+            });
+        }
+
         public void UpdateListeningStatus(bool isEnabled)
         {
             Dispatcher.Invoke(() =>
             {
-                if (isEnabled)
+                var greenBrush = new SolidColorBrush(Color.FromRgb(163, 190, 140)); // 绿色
+                var redBrush = new SolidColorBrush(Color.FromRgb(191, 97, 106)); // 红色
+                var statusText = isEnabled ? "监听: 已启用" : "监听: 已禁用";
+
+                // 更新简单模式
+                if (SimpleListeningIndicator != null)
                 {
-                    ListeningIndicator.Fill = new SolidColorBrush(Color.FromRgb(163, 190, 140)); // 绿色
-                    ListeningStatusText.Text = "监听: 已启用";
+                    SimpleListeningIndicator.Fill = isEnabled ? greenBrush : redBrush;
                 }
-                else
+                if (SimpleListeningText != null)
                 {
-                    ListeningIndicator.Fill = new SolidColorBrush(Color.FromRgb(191, 97, 106)); // 红色
-                    ListeningStatusText.Text = "监听: 已禁用";
+                    SimpleListeningText.Text = statusText;
+                }
+
+                // 更新完整模式
+                if (ListeningIndicator != null)
+                {
+                    ListeningIndicator.Fill = isEnabled ? greenBrush : redBrush;
+                }
+                if (ListeningStatusText != null)
+                {
+                    ListeningStatusText.Text = statusText;
                 }
             });
         }
@@ -97,15 +153,20 @@ namespace UltAssist.UI
         {
             Dispatcher.Invoke(() =>
             {
-                if (isGameActive)
+                // 只在完整模式下显示游戏状态
+                if (_currentStyle == OverlayStyle.DebugPanel)
                 {
-                    GameIndicator.Fill = new SolidColorBrush(Color.FromRgb(163, 190, 140)); // 绿色
-                    GameStatusText.Text = "游戏: 已检测到";
-                }
-                else
-                {
-                    GameIndicator.Fill = new SolidColorBrush(Color.FromRgb(191, 97, 106)); // 红色
-                    GameStatusText.Text = "游戏: 未检测到";
+                    var greenBrush = new SolidColorBrush(Color.FromRgb(163, 190, 140)); // 绿色
+                    var redBrush = new SolidColorBrush(Color.FromRgb(191, 97, 106)); // 红色
+
+                    if (GameIndicator != null)
+                    {
+                        GameIndicator.Fill = isGameActive ? greenBrush : redBrush;
+                    }
+                    if (GameStatusText != null)
+                    {
+                        GameStatusText.Text = isGameActive ? "游戏: 已检测到" : "游戏: 未检测到";
+                    }
                 }
             });
         }
@@ -114,8 +175,12 @@ namespace UltAssist.UI
         {
             Dispatcher.Invoke(() =>
             {
-                var timeStr = timestamp.ToString("HH:mm:ss");
-                LastKeyText.Text = $"最后按键: {keyName} ({timeStr})";
+                // 只在完整模式下显示最后按键
+                if (_currentStyle == OverlayStyle.DebugPanel && LastKeyText != null)
+                {
+                    var timeStr = timestamp.ToString("HH:mm:ss");
+                    LastKeyText.Text = $"最后按键: {keyName} ({timeStr})";
+                }
             });
         }
 
@@ -123,18 +188,22 @@ namespace UltAssist.UI
         {
             Dispatcher.Invoke(() =>
             {
-                if (audioFiles.Length == 0)
+                // 只在完整模式下显示播放信息
+                if (_currentStyle == OverlayStyle.DebugPanel && PlayingAudiosText != null)
                 {
-                    PlayingAudiosText.Text = "播放: -";
-                }
-                else if (audioFiles.Length == 1)
-                {
-                    var fileName = System.IO.Path.GetFileNameWithoutExtension(audioFiles[0]);
-                    PlayingAudiosText.Text = $"播放: {fileName}";
-                }
-                else
-                {
-                    PlayingAudiosText.Text = $"播放: {audioFiles.Length}个音频";
+                    if (audioFiles.Length == 0)
+                    {
+                        PlayingAudiosText.Text = "播放: -";
+                    }
+                    else if (audioFiles.Length == 1)
+                    {
+                        var fileName = System.IO.Path.GetFileNameWithoutExtension(audioFiles[0]);
+                        PlayingAudiosText.Text = $"播放: {fileName}";
+                    }
+                    else
+                    {
+                        PlayingAudiosText.Text = $"播放: {audioFiles.Length}个音频";
+                    }
                 }
             });
         }

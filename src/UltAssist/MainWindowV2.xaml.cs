@@ -70,7 +70,6 @@ namespace UltAssist
                 _statusOverlay = new StatusOverlayWindow();
                 _statusOverlay.MinimizeMainWindow += OnMinimizeMainWindow;
                 _statusOverlay.CloseApplication += OnCloseApplication;
-                _statusOverlay.Show();
                 
                 // 初始化状态显示
                 UpdateStatusOverlay();
@@ -86,9 +85,15 @@ namespace UltAssist
         {
             if (_statusOverlay == null) return;
             
+            // 设置显示样式
+            var overlayStyle = _core?.Config?.Global?.Overlay?.Style ?? OverlayStyle.None;
+            _statusOverlay.SetDisplayStyle(overlayStyle);
+            
+            // 更新状态信息
             _statusOverlay.UpdateListeningStatus(_core?.IsGlobalEnabled ?? false);
             _statusOverlay.UpdateGameStatus(_core?.IsGameWindowActive ?? false);
             
+            // 设置目标进程名
             if (_core?.Config?.Global?.GameProcessNames?.Count > 0)
             {
                 _statusOverlay.SetTargetProcessName(_core.Config.Global.GameProcessNames[0]);
@@ -121,7 +126,6 @@ namespace UltAssist
 
             // 初始化overlay配置
             OverlayStyleCombo.SelectedIndex = 0; // None
-            OverlayPositionCombo.SelectedIndex = 0; // TopLeft
         }
 
         private void LoadConfiguration()
@@ -164,8 +168,9 @@ namespace UltAssist
             Dispatcher.BeginInvoke(() => UpdateDebugPanelVisibility());
 
             // 顶部指示栏
-            OverlayStyleCombo.SelectedValue = global.Overlay.Style.ToString();
-            OverlayPositionCombo.SelectedValue = global.Overlay.Position.ToString();
+            SetComboBoxSelection(OverlayStyleCombo, global.Overlay.Style.ToString());
+
+
 
             // 状态显示
             GlobalEnabledText.Text = global.GlobalListenerEnabled ? "开启" : "关闭";
@@ -241,13 +246,16 @@ namespace UltAssist
                     .ToList();
                 global.GameProcessNames = processNames;
 
-                // 顶部指示栏
-                if (Enum.TryParse<OverlayStyle>(OverlayStyleCombo.SelectedValue?.ToString(), out var style))
+                // 顶部指示栏（只保存样式，位置设置为默认值）
+                if (OverlayStyleCombo.SelectedItem is ComboBoxItem styleItem &&
+                    Enum.TryParse<OverlayStyle>(styleItem.Tag?.ToString(), out var style))
                     global.Overlay.Style = style;
-                if (Enum.TryParse<OverlayPosition>(OverlayPositionCombo.SelectedValue?.ToString(), out var position))
-                    global.Overlay.Position = position;
+                global.Overlay.Position = OverlayPosition.TopLeft; // 固定默认位置
 
                 _core.UpdateGlobalSettings(global);
+                
+                // 更新状态栏显示
+                UpdateStatusOverlay();
                 
                 MessageBox.Show("全局设置已保存", "保存成功", MessageBoxButton.OK, MessageBoxImage.Information);
             }
@@ -676,6 +684,18 @@ namespace UltAssist
                 UpdateDebugPanelVisibility();
                 _devClickCount = 0;
                 MessageBox.Show("Debug模式已启用", "开发者模式", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+        }
+
+        private void SetComboBoxSelection(ComboBox comboBox, string tagValue)
+        {
+            for (int i = 0; i < comboBox.Items.Count; i++)
+            {
+                if (comboBox.Items[i] is ComboBoxItem item && item.Tag?.ToString() == tagValue)
+                {
+                    comboBox.SelectedIndex = i;
+                    break;
+                }
             }
         }
 

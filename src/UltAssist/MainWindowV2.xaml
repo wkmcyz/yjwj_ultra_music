@@ -114,31 +114,14 @@
                         <!-- 顶部指示栏配置 -->
                         <StackPanel Grid.Row="2" Margin="0,0,0,15">
                             <TextBlock Text="📊 顶部指示栏" FontWeight="SemiBold" Margin="0,0,0,8"/>
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="15"/>
-                                    <ColumnDefinition Width="*"/>
-                                </Grid.ColumnDefinitions>
-                                
-                                <StackPanel Grid.Column="0">
-                                    <TextBlock Text="显示样式:" Margin="0,0,0,3"/>
-                                    <ComboBox x:Name="OverlayStyleCombo">
-                                        <ComboBoxItem Content="无" Tag="None"/>
-                                        <ComboBoxItem Content="开启/关闭状态" Tag="StatusOnly"/>
-                                        <ComboBoxItem Content="调试面板" Tag="DebugPanel"/>
-                                    </ComboBox>
-                                </StackPanel>
-                                
-                                <StackPanel Grid.Column="2">
-                                    <TextBlock Text="显示位置:" Margin="0,0,0,3"/>
-                                    <ComboBox x:Name="OverlayPositionCombo">
-                                        <ComboBoxItem Content="左上角" Tag="TopLeft"/>
-                                        <ComboBoxItem Content="右上角" Tag="TopRight"/>
-                                        <ComboBoxItem Content="中间顶部" Tag="TopCenter"/>
-                                    </ComboBox>
-                                </StackPanel>
-                            </Grid>
+                            <StackPanel>
+                                <TextBlock Text="显示样式:" Margin="0,0,0,3"/>
+                                <ComboBox x:Name="OverlayStyleCombo">
+                                    <ComboBoxItem Content="无" Tag="None"/>
+                                    <ComboBoxItem Content="简单" Tag="StatusOnly"/>
+                                    <ComboBoxItem Content="完整" Tag="DebugPanel"/>
+                                </ComboBox>
+                            </StackPanel>
                         </StackPanel>
                         
                         <!-- 开发者选项 (隐藏按钮，双击三次启用Debug) -->
