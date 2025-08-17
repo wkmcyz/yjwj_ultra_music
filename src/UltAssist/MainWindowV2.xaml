@@ -45,6 +45,7 @@
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
                         </Grid.RowDefinitions>
                         
                         <!-- 设备选择 -->
@@ -68,8 +69,7 @@
                                 </StackPanel>
                             </Grid>
                             
-                            <CheckBox x:Name="TempDefaultMicCheck" Content="运行时将默认麦克风切到虚拟麦" 
-                                     Margin="0,8,0,0" ToolTip="勾选后自动将系统默认录音设备切换到虚拟麦克风"/>
+
                         </StackPanel>
                         
                         <!-- 监听范围配置 -->
@@ -141,16 +141,22 @@
                             </Grid>
                         </StackPanel>
                         
-                        <!-- 保存按钮和日志按钮 -->
-                        <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right">
-                            <Button x:Name="OpenLogBtn" Content="📋 查看日志" Padding="10,8" Margin="0,0,8,0"
-                                   Background="#88C0D0" Foreground="White" BorderThickness="0"
-                                   ToolTip="打开当前会话日志文件"
-                                   Click="OpenLogBtn_Click"/>
-                            <Button x:Name="OpenLogDirBtn" Content="📁 日志目录" Padding="10,8" Margin="0,0,8,0"
-                                   Background="#81A1C1" Foreground="White" BorderThickness="0"
-                                   ToolTip="打开日志目录，查看历史日志"
-                                   Click="OpenLogDirBtn_Click"/>
+                        <!-- 开发者选项 (隐藏按钮，双击三次启用Debug) -->
+                        <StackPanel Grid.Row="3" Margin="0,0,0,15">
+                            <Border x:Name="DevAccessBorder" 
+                                   HorizontalAlignment="Right" 
+                                   VerticalAlignment="Top"
+                                   Padding="2,1" 
+                                   Background="Transparent"
+                                   Cursor="Hand" 
+                                   MouseLeftButtonDown="DevAccessText_MouseLeftButtonDown"
+                                   ToolTip="">
+                                <TextBlock x:Name="DevAccessText" Text="." FontSize="6" Foreground="#F0F0F0"/>
+                            </Border>
+                        </StackPanel>
+                        
+                        <!-- 保存按钮 -->
+                        <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Right">
                             <Button x:Name="SaveGlobalBtn" Content="💾 保存全局设置" Padding="15,8" 
                                    Background="#5E81AC" Foreground="White" BorderThickness="0"
                                    Click="SaveGlobalBtn_Click"/>
@@ -178,11 +184,6 @@
                             <StackPanel Grid.Column="0" Orientation="Horizontal">
                                 <TextBlock Text="当前方案:" VerticalAlignment="Center" Margin="0,0,8,0"/>
                                 <ComboBox x:Name="HeroCombo" Width="150" SelectionChanged="HeroCombo_SelectionChanged"/>
-                                <TextBlock Text="最后按键:" VerticalAlignment="Center" Margin="25,0,8,0"/>
-                                <TextBlock x:Name="LastKeyText" Text="无" VerticalAlignment="Center" 
-                                         FontFamily="Consolas" Background="#ECEFF4" Padding="5,2"/>
-                                <TextBlock x:Name="LastKeyTimeText" Text="" VerticalAlignment="Center" 
-                                         Foreground="#5E81AC" Margin="8,0,0,0" FontSize="11"/>
                             </StackPanel>
                             
                             <StackPanel Grid.Column="1" Orientation="Horizontal">
@@ -273,13 +274,47 @@
                     </Grid>
                 </GroupBox>
 
-                <!-- ========== 3. 自动截图辅助区域 (保留用于扩展) ========== -->
-                <GroupBox Header="📸 自动截图辅助 (保留功能)" FontSize="14" FontWeight="SemiBold">
+                <!-- ========== 3. Debug信息面板 (仅Debug模式显示) ========== -->
+                <GroupBox x:Name="DebugPanel" Header="🔧 Debug信息" FontSize="14" FontWeight="SemiBold" 
+                         Visibility="Collapsed">
                     <StackPanel Margin="10">
-                        <TextBlock Text="此区域保留用于将来功能扩展，如自动截图、ROI选择等。" 
-                                 Foreground="#5E81AC" FontStyle="Italic"/>
-                        <Button x:Name="SelectRoiBtn" Content="🎯 选择ROI区域" Margin="0,10,0,0" 
-                               Padding="10,8" HorizontalAlignment="Left" Click="SelectRoiBtn_Click"/>
+                        <!-- Debug模式开关 -->
+                        <CheckBox x:Name="DebugModeCheck" Content="启用Debug模式" 
+                                 Checked="DebugModeCheck_Changed" Unchecked="DebugModeCheck_Changed"
+                                 Margin="0,0,0,15"/>
+                        
+                        <!-- 最后按键信息 -->
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                            <TextBlock Text="最后按键:" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                            <TextBlock x:Name="LastKeyText" Text="无" VerticalAlignment="Center" 
+                                     FontFamily="Consolas" Background="#ECEFF4" Padding="5,2"/>
+                            <TextBlock x:Name="LastKeyTimeText" Text="" VerticalAlignment="Center" 
+                                     Foreground="#5E81AC" Margin="8,0,0,0" FontSize="11"/>
+                        </StackPanel>
+                        
+                        <!-- 临时麦克风切换 -->
+                        <CheckBox x:Name="TempDefaultMicCheck" Content="运行时将默认麦克风切到虚拟麦" 
+                                 Margin="0,0,0,10" ToolTip="勾选后自动将系统默认录音设备切换到虚拟麦克风"/>
+                        
+                        <!-- Debug功能按钮 -->
+                        <StackPanel Orientation="Horizontal" Margin="0,5,0,10">
+                            <Button x:Name="SelectRoiBtn" Content="🎯 选择ROI区域" Margin="0,0,10,0" 
+                                   Padding="8,5" Click="SelectRoiBtn_Click"/>
+                            <TextBlock Text="Debug功能：用于开发和故障排除" 
+                                     VerticalAlignment="Center" Foreground="#5E81AC" FontStyle="Italic"/>
+                        </StackPanel>
+                        
+                        <!-- 日志功能按钮 -->
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,0">
+                            <Button x:Name="OpenLogBtn" Content="📋 查看日志" Padding="8,5" Margin="0,0,8,0"
+                                   Background="#88C0D0" Foreground="White" BorderThickness="0"
+                                   ToolTip="打开当前会话日志文件"
+                                   Click="OpenLogBtn_Click"/>
+                            <Button x:Name="OpenLogDirBtn" Content="📁 日志目录" Padding="8,5" Margin="0,0,8,0"
+                                   Background="#A3BE8C" Foreground="White" BorderThickness="0"
+                                   ToolTip="打开日志文件夹"
+                                   Click="OpenLogDirBtn_Click"/>
+                        </StackPanel>
                     </StackPanel>
                 </GroupBox>
                 

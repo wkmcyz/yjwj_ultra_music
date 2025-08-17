@@ -19,6 +19,8 @@ namespace UltAssist
         private UltAssistCoreV2 _core = null!;
         private List<KeyMappingViewModel> _mappingViewModels = new();
         private StatusOverlayWindow? _statusOverlay;
+        private int _devClickCount = 0;
+        private DateTime _lastDevClick = DateTime.MinValue;
 
         public MainWindowV2()
         {
@@ -157,6 +159,10 @@ namespace UltAssist
             // 更新游戏进程面板可见性（延迟执行确保UI已初始化）
             Dispatcher.BeginInvoke(() => UpdateGameProcessPanelVisibility());
 
+            // Debug模式
+            DebugModeCheck.IsChecked = global.DebugMode;
+            Dispatcher.BeginInvoke(() => UpdateDebugPanelVisibility());
+
             // 顶部指示栏
             OverlayStyleCombo.SelectedValue = global.Overlay.Style.ToString();
             OverlayPositionCombo.SelectedValue = global.Overlay.Position.ToString();
@@ -205,6 +211,9 @@ namespace UltAssist
                 if (VirtualMicCombo.SelectedItem is AudioDeviceItem virtualMic)
                     global.VirtualMicDeviceId = virtualMic.Id;
                 global.TemporarilySetDefaultMic = TempDefaultMicCheck.IsChecked ?? false;
+
+                // Debug模式
+                global.DebugMode = DebugModeCheck.IsChecked ?? false;
 
                 // 监听模式
                 global.ListeningMode = GameWindowOnlyRadio.IsChecked == true ? 
@@ -622,6 +631,51 @@ namespace UltAssist
             else
             {
                 GameProcessPanel.Visibility = Visibility.Collapsed;
+            }
+        }
+
+        private void UpdateDebugPanelVisibility()
+        {
+            // 确保UI控件已经初始化
+            if (DebugModeCheck == null || DebugPanel == null)
+                return;
+                
+            // 只有在Debug模式下才显示Debug面板
+            if (DebugModeCheck.IsChecked == true)
+            {
+                DebugPanel.Visibility = Visibility.Visible;
+            }
+            else
+            {
+                DebugPanel.Visibility = Visibility.Collapsed;
+            }
+        }
+
+        private void DebugModeCheck_Changed(object sender, RoutedEventArgs e)
+        {
+            UpdateDebugPanelVisibility();
+        }
+
+        private void DevAccessText_MouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            var now = DateTime.Now;
+            
+            // 如果距离上次点击超过3秒，重置计数
+            if ((now - _lastDevClick).TotalSeconds > 3)
+            {
+                _devClickCount = 0;
+            }
+            
+            _devClickCount++;
+            _lastDevClick = now;
+            
+            // 连续点击3次启用Debug模式
+            if (_devClickCount >= 3)
+            {
+                DebugModeCheck.IsChecked = true;
+                UpdateDebugPanelVisibility();
+                _devClickCount = 0;
+                MessageBox.Show("Debug模式已启用", "开发者模式", MessageBoxButton.OK, MessageBoxImage.Information);
             }
         }
 
