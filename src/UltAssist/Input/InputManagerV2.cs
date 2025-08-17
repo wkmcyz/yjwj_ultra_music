@@ -13,12 +13,13 @@ namespace UltAssist.Input
         // 当前按下的所有按键（键盘+鼠标）
         private readonly HashSet<string> _currentlyPressed = new();
         
-        // 全局开关状态（Ctrl+1控制）
+        // 全局开关状态（通过自定义快捷键控制）
         private bool _globalEnabled = true;
         
         // 配置
         private ListeningMode _listeningMode = ListeningMode.GameWindowOnly;
         private List<string> _gameProcessNames = new();
+        private KeyCombination? _globalToggleHotkey = null;
 
         // 事件
         public event Action<KeyCombination>? KeyCombinationTriggered;
@@ -47,10 +48,11 @@ namespace UltAssist.Input
             _listeningMode = settings.ListeningMode;
             _gameProcessNames = settings.GameProcessNames?.ToList() ?? new();
             _globalEnabled = settings.GlobalListenerEnabled;
+            _globalToggleHotkey = settings.GlobalToggleHotkey;
 
             // 更新子监听器
             _keyListener.UpdateSettings(_listeningMode, _gameProcessNames);
-            _keyListener.Enabled = _globalEnabled;
+            _keyListener.Enabled = true; // 键盘监听器始终启用，以便检测全局开关快捷键
             _mouseListener.Enabled = _globalEnabled;
         }
 
@@ -59,7 +61,10 @@ namespace UltAssist.Input
             if (_globalEnabled != enabled)
             {
                 _globalEnabled = enabled;
-                _keyListener.Enabled = enabled;
+                
+                // 键盘监听器始终保持启用，以便能够检测全局开关快捷键
+                // 鼠标监听器根据全局状态启用/禁用
+                _keyListener.Enabled = true; // 始终启用键盘监听
                 _mouseListener.Enabled = enabled;
                 
                 if (!enabled)
@@ -73,12 +78,15 @@ namespace UltAssist.Input
 
         private void OnKeyCombinationPressed(KeyCombination combination)
         {
-            if (!_globalEnabled) return;
+            // 检查是否是全局开关快捷键，如果是则始终处理
+            bool isGlobalToggleKey = _globalToggleHotkey != null && combination.Equals(_globalToggleHotkey);
+            
+            if (!isGlobalToggleKey && !_globalEnabled) return;
 
-            // 检查是否是全局开关按键 Ctrl+1
-            if (IsGlobalToggleKey(combination))
+            // 如果是全局开关快捷键，直接触发事件，无需进一步检查
+            if (isGlobalToggleKey)
             {
-                SetGlobalEnabled(!_globalEnabled);
+                KeyCombinationTriggered?.Invoke(combination);
                 return;
             }
 
@@ -127,19 +135,11 @@ namespace UltAssist.Input
             GameWindowActiveChanged?.Invoke(isActive);
         }
 
-        private static bool IsGlobalToggleKey(KeyCombination combination)
-        {
-            // 检查是否是 Ctrl+1 组合键
-            return combination.Keys.Count == 2 &&
-                   combination.Keys.Contains("Ctrl") &&
-                   combination.Keys.Contains("1");
-        }
 
-        // 判断某个按键组合是否被禁止（不能与全局开关冲突）
+
+        // 判断某个按键组合是否被禁止
         public static bool IsProhibitedKeyCombination(KeyCombination combination)
         {
-            // 禁止配置 Ctrl+1（全局开关）
-            if (IsGlobalToggleKey(combination)) return true;
             
             // 禁止配置 ESC（录制取消键）
             if (combination.Keys.Count == 1 && combination.Keys.Contains("Escape")) return true;

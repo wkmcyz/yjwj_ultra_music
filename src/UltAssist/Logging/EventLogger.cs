@@ -30,7 +30,7 @@ namespace UltAssist.Logging
                 _currentLogFile = Path.Combine(_logDirectory, $"UltAssist_{timestamp}.log");
 
                 // 写入会话开始标记
-                LogEvent("SYSTEM", "会话开始", $"UltAssist V2 启动");
+                LogEvent("SYSTEM", "会话开始", $"UltAssist v1.0.0 启动");
             }
             catch (Exception ex)
             {

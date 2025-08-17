@@ -15,7 +15,7 @@ namespace UltAssist
             {
                 base.OnStartup(e);
                 
-                // 启动V2版本的主窗口
+                // 启动v1.0.0版本的主窗口
                 var mainWindow = new MainWindowV2();
                 mainWindow.Show();
             }

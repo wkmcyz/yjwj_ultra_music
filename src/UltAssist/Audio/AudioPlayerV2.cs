@@ -153,7 +153,7 @@ namespace UltAssist.Audio
             // 停止所有当前播放，更新设备后需要重新初始化
             StopAllAudios(immediate: true);
             
-            // 注意：实际使用中可能需要重新创建 AudioPlayerV2 实例
+            // 注意：实际使用中可能需要重新创建 AudioPlayer 实例
             // 这里只是标记设备更新，实际设备切换会在重新创建时生效
         }
 

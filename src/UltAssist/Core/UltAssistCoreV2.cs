@@ -35,7 +35,7 @@ namespace UltAssist.Core
 
         public UltAssistCoreV2()
         {
-            EventLogger.LogSystemInfo("初始化开始", "正在启动UltAssistCoreV2");
+            EventLogger.LogSystemInfo("初始化开始", "正在启动UltAssist Core v1.0.0");
             
             _audioService = new AudioDeviceService();
             _inputManager = new InputManagerV2();
@@ -54,7 +54,7 @@ namespace UltAssist.Core
             // 应用配置
             ApplyConfiguration();
             
-            EventLogger.LogSystemInfo("初始化完成", "UltAssistCoreV2启动成功");
+            EventLogger.LogSystemInfo("初始化完成", "UltAssist Core v1.0.0启动成功");
         }
 
         public void LoadConfiguration()
@@ -209,6 +209,30 @@ namespace UltAssist.Core
             _audioPlayer?.StopAudio(keyId, immediate: false);
         }
 
+        private void ToggleGlobalListening()
+        {
+            var newState = !_config.Global.GlobalListenerEnabled;
+            _config.Global.GlobalListenerEnabled = newState;
+            
+            // 如果关闭监听，停止所有正在播放的音乐
+            if (!newState && _audioPlayer != null)
+            {
+                EventLogger.LogEvent("AUDIO", "全局监听关闭", "停止所有播放中的音乐");
+                _audioPlayer.StopAllAudios(immediate: false); // 使用淡出停止
+            }
+            
+            // 立即应用状态变化
+            _inputManager.SetGlobalEnabled(newState);
+            
+            // 保存配置
+            ConfigServiceV2.Save(_config);
+            
+            // 通知UI状态变化
+            GlobalEnabledChanged?.Invoke(newState);
+            
+            EventLogger.LogGlobalToggle(newState, "快捷键触发");
+        }
+
         private void InitializeAudioPlayer()
         {
             try
@@ -262,6 +286,16 @@ namespace UltAssist.Core
         {
             var keyName = combination.ToDisplayString();
             
+            // 检查是否是全局开关快捷键
+            if (_config.Global.GlobalToggleHotkey != null && 
+                combination.Equals(_config.Global.GlobalToggleHotkey))
+            {
+                // 切换全局监听状态
+                ToggleGlobalListening();
+                EventLogger.LogKeyPress(keyName, true, "GlobalToggle", "触发全局开关");
+                return;
+            }
+            
             // 查找当前配置文件的匹配映射
             var profile = GetCurrentProfile();
             if (profile == null) 
@@ -313,6 +347,14 @@ namespace UltAssist.Core
         {
             EventLogger.LogGlobalToggle(enabled, "按键触发");
             _config.Global.GlobalListenerEnabled = enabled;
+            
+            // 如果关闭监听，停止所有正在播放的音乐
+            if (!enabled && _audioPlayer != null)
+            {
+                EventLogger.LogEvent("AUDIO", "全局监听关闭", "停止所有播放中的音乐 (来源: InputManager)");
+                _audioPlayer.StopAllAudios(immediate: false); // 使用淡出停止
+            }
+            
             SaveConfiguration();
             GlobalEnabledChanged?.Invoke(enabled);
         }

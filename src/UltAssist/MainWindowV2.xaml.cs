@@ -8,6 +8,7 @@ using System.Windows;
 using System.Windows.Controls;
 using UltAssist.Config;
 using UltAssist.Core;
+using UltAssist.Input;
 using UltAssist.Logging;
 using UltAssist.UI;
 using UltAssist.Vision;
@@ -23,6 +24,7 @@ namespace UltAssist
         private DateTime _lastDevClick = DateTime.MinValue;
         private Button? _currentTestButton; // 跟踪当前正在测试播放的按钮
         private string? _currentTestKeyId; // 跟踪当前测试播放的按键ID
+        private KeyCombination? _globalToggleHotkey; // 存储录制的全局开关快捷键
 
         public MainWindowV2()
         {
@@ -172,7 +174,9 @@ namespace UltAssist
             // 顶部指示栏
             SetComboBoxSelection(OverlayStyleCombo, global.Overlay.Style.ToString());
 
-
+            // 全局开关快捷键
+            _globalToggleHotkey = global.GlobalToggleHotkey;
+            GlobalHotkeyBox.Text = global.GlobalToggleHotkey?.ToDisplayString() ?? "未设置";
 
             // 状态显示
             GlobalEnabledText.Text = global.GlobalListenerEnabled ? "开启" : "关闭";
@@ -253,6 +257,9 @@ namespace UltAssist
                     Enum.TryParse<OverlayStyle>(styleItem.Tag?.ToString(), out var style))
                     global.Overlay.Style = style;
                 global.Overlay.Position = OverlayPosition.TopLeft; // 固定默认位置
+
+                // 全局开关快捷键
+                global.GlobalToggleHotkey = _globalToggleHotkey;
 
                 _core.UpdateGlobalSettings(global);
                 
@@ -912,6 +919,40 @@ namespace UltAssist
                 MessageBox.Show($"备份失败: {ex.Message}", "错误", 
                     MessageBoxButton.OK, MessageBoxImage.Error);
             }
+        }
+
+        private void SetGlobalHotkeyBtn_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var dialog = new KeyRecordingDialog();
+                dialog.Owner = this;
+                dialog.Title = "录制全局开关快捷键";
+                
+                if (dialog.ShowDialog() == true && dialog.RecordedKey != null)
+                {
+                    _globalToggleHotkey = dialog.RecordedKey;
+                    GlobalHotkeyBox.Text = dialog.RecordedKey.ToDisplayString();
+                    UpdateSaveButtonState();
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"录制失败: {ex.Message}", "错误", 
+                    MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private void ClearGlobalHotkeyBtn_Click(object sender, RoutedEventArgs e)
+        {
+            _globalToggleHotkey = null;
+            GlobalHotkeyBox.Text = "未设置";
+            UpdateSaveButtonState();
+        }
+
+        private void UpdateSaveButtonState()
+        {
+            // 可以在这里添加保存按钮状态更新逻辑
         }
     }
 

@@ -4,7 +4,7 @@ using System.Linq;
 
 namespace UltAssist.Config
 {
-    // V2 配置模型：通用按键映射系统，适用于所有游戏
+    // v1.0.0 配置模型：通用按键映射系统，适用于所有游戏
     public class AppConfigV2
     {
         public GlobalSettings Global { get; set; } = new();
@@ -22,13 +22,16 @@ namespace UltAssist.Config
         // 监听配置
         public ListeningMode ListeningMode { get; set; } = ListeningMode.Global;
         public List<string> GameProcessNames { get; set; } = new();
-        public bool GlobalListenerEnabled { get; set; } = true; // Ctrl+1 开关状态
+        public bool GlobalListenerEnabled { get; set; } = true; // 全局监听开关状态
 
         // 顶部指示栏配置
         public OverlaySettings Overlay { get; set; } = new();
 
         // 调试设置
         public bool DebugMode { get; set; } = false;
+        
+        // 全局开关快捷键
+        public KeyCombination? GlobalToggleHotkey { get; set; } = null;
     }
 
     public enum ListeningMode
