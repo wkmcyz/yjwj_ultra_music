@@ -50,11 +50,20 @@ namespace UltAssist.Audio
 
             EventLogger.LogAudioPlay(keyId, audioSettings.FilePath, "Current", audioSettings.Interruptible);
 
-            // 检查重复按键：如果同一按键已在播放，先停止之前的
+            // 检查重复按键：根据RepeatBehavior处理
             if (_playingAudios.TryGetValue(keyId, out var existingAudio))
             {
-                EventLogger.LogEvent("AUDIO", "重复按键打断", "按键={0}, 原音频={1}", keyId, existingAudio.AudioSettings.FilePath);
-                StopAudio(keyId, immediate: true); // 立即停止，不淡出
+                if (audioSettings.RepeatBehavior == RepeatBehavior.Stop)
+                {
+                    EventLogger.LogEvent("AUDIO", "重复按键停止", "按键={0}, 原音频={1}", keyId, existingAudio.AudioSettings.FilePath);
+                    StopAudio(keyId, immediate: true);
+                    return; // 停止播放，不开始新的播放
+                }
+                else // RepeatBehavior.Restart
+                {
+                    EventLogger.LogEvent("AUDIO", "重复按键重新播放", "按键={0}, 原音频={1}", keyId, existingAudio.AudioSettings.FilePath);
+                    StopAudio(keyId, immediate: true); // 立即停止，准备重新播放
+                }
             }
 
             // 检查可打断性：停止所有可打断的音频
@@ -204,11 +213,8 @@ namespace UltAssist.Audio
                 // 淡入效果
                 _ = FadeIn();
 
-                // 如果不是循环播放，设置播放完成监听
-                if (!_audioSettings.Loop)
-                {
-                    _ = MonitorPlaybackCompletion();
-                }
+                // 设置播放完成监听
+                _ = MonitorPlaybackCompletion();
             }
             catch
             {
@@ -231,15 +237,19 @@ namespace UltAssist.Audio
         {
             var reader = new AudioFileReader(_audioSettings.FilePath);
             
-            if (!_audioSettings.Loop)
+            if (_audioSettings.DurationMode == DurationMode.Default)
             {
+                // 默认时长：播放原始文件时长，不循环
                 disposable = reader;
                 return reader;
             }
-
-            var looping = new LoopingAudioFileReader(reader);
-            disposable = looping;
-            return looping;
+            else // DurationMode.Custom
+            {
+                // 指定时长：循环播放直到指定时长
+                var looping = new LoopingAudioFileReader(reader);
+                disposable = looping;
+                return looping;
+            }
         }
 
         private static ISampleProvider AdaptToDeviceFormat(ISampleProvider source, MMDevice device)
@@ -326,14 +336,22 @@ namespace UltAssist.Audio
 
         private async Task MonitorPlaybackCompletion()
         {
-            // 等待播放完成（非循环模式）
-            while (_outHeadphone?.PlaybackState == PlaybackState.Playing || 
-                   _outVirtualMic?.PlaybackState == PlaybackState.Playing)
+            if (_audioSettings.DurationMode == DurationMode.Custom)
             {
-                await Task.Delay(100);
+                // 自定义时长：等待指定时长后停止
+                await Task.Delay(_audioSettings.CustomDurationSeconds * 1000);
+                _onCompleted?.Invoke();
             }
-
-            _onCompleted?.Invoke();
+            else
+            {
+                // 默认时长：等待播放完成
+                while (_outHeadphone?.PlaybackState == PlaybackState.Playing || 
+                       _outVirtualMic?.PlaybackState == PlaybackState.Playing)
+                {
+                    await Task.Delay(100);
+                }
+                _onCompleted?.Invoke();
+            }
         }
 
         public void Dispose()

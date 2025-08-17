@@ -119,13 +119,31 @@ namespace UltAssist.Config
         }
     }
 
+    public enum RepeatBehavior
+    {
+        Stop,    // 停止音乐
+        Restart  // 从头播放音乐
+    }
+
+    public enum DurationMode
+    {
+        Default, // 默认时长
+        Custom   // 指定时长
+    }
+
     public class AudioSettings
     {
         public string FilePath { get; set; } = string.Empty;
         public float Volume { get; set; } = 0.7f; // 0.0 - 1.0
         public int FadeInMs { get; set; } = 200;
         public int FadeOutMs { get; set; } = 150;
+        public bool Interruptible { get; set; } = false; // 是否可被其他按键打断
+        public RepeatBehavior RepeatBehavior { get; set; } = RepeatBehavior.Stop; // 再次按下时的行为
+        public DurationMode DurationMode { get; set; } = DurationMode.Default; // 时长模式
+        public int CustomDurationSeconds { get; set; } = 30; // 自定义时长（秒）
+
+        // 向后兼容：保留Loop属性但标记为过时
+        [Obsolete("Use DurationMode and CustomDurationSeconds instead")]
         public bool Loop { get; set; } = false;
-        public bool Interruptible { get; set; } = true; // 是否可被其他按键打断
     }
 }

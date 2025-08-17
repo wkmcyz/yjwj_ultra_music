@@ -76,6 +76,7 @@
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
                         </Grid.RowDefinitions>
                         
                         <!-- 音量 -->
@@ -106,12 +107,37 @@
                             </StackPanel>
                         </StackPanel>
                         
-                        <!-- 循环和打断设置 -->
+                        <!-- 再次按下时的行为 -->
                         <StackPanel Grid.Row="2" Margin="0,0,0,10">
-                            <CheckBox x:Name="LoopCheck" Content="循环播放" Margin="0,0,0,5"
-                                     ToolTip="勾选后音乐将循环播放直到被打断或手动停止"/>
-                            <CheckBox x:Name="InterruptibleCheck" Content="可被其他按键打断" IsChecked="True"
-                                     ToolTip="取消勾选后，此音乐播放时按其他按键不会停止当前音乐"/>
+                            <TextBlock Text="再次按下时:" Margin="0,0,0,5"/>
+                            <StackPanel Orientation="Horizontal">
+                                <RadioButton x:Name="StopOnRepeatRadio" Content="停止音乐" Margin="0,0,20,0" IsChecked="True"
+                                           ToolTip="再次按下相同按键时停止当前播放"/>
+                                <RadioButton x:Name="RestartOnRepeatRadio" Content="从头播放音乐"
+                                           ToolTip="再次按下相同按键时从头开始播放"/>
+                            </StackPanel>
+                        </StackPanel>
+                        
+                        <!-- 时长配置 -->
+                        <StackPanel Grid.Row="3" Margin="0,0,0,10">
+                            <TextBlock Text="时长配置:" Margin="0,0,0,5"/>
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
+                                <RadioButton x:Name="DefaultDurationRadio" Content="默认时长" Margin="0,0,20,0" IsChecked="True"
+                                           ToolTip="播放音频文件的原始时长" Checked="DurationRadio_Changed"/>
+                                <RadioButton x:Name="CustomDurationRadio" Content="指定时长" 
+                                           ToolTip="循环播放直到指定时长" Checked="DurationRadio_Changed"/>
+                            </StackPanel>
+                            <StackPanel x:Name="CustomDurationPanel" Orientation="Horizontal" Margin="0,5,0,0" 
+                                      Visibility="Collapsed">
+                                <TextBlock Text="时长 (秒):" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                <TextBox x:Name="CustomDurationBox" Text="30" Width="80"/>
+                            </StackPanel>
+                        </StackPanel>
+                        
+                        <!-- 其他设置 -->
+                        <StackPanel Grid.Row="4" Margin="0,0,0,10">
+                            <CheckBox x:Name="InterruptibleCheck" Content="播放新音乐时停止该音乐" IsChecked="False"
+                                     ToolTip="勾选后，播放其他音乐时会自动停止当前音乐；取消勾选后，可以同时播放多个音乐"/>
                         </StackPanel>
                     </Grid>
                 </GroupBox>

@@ -71,8 +71,17 @@ namespace UltAssist
             VolumeSlider.Value = _keyMapping.Audio.Volume;
             FadeInBox.Text = _keyMapping.Audio.FadeInMs.ToString();
             FadeOutBox.Text = _keyMapping.Audio.FadeOutMs.ToString();
-            LoopCheck.IsChecked = _keyMapping.Audio.Loop;
             InterruptibleCheck.IsChecked = _keyMapping.Audio.Interruptible;
+
+            // 设置新的配置项
+            StopOnRepeatRadio.IsChecked = _keyMapping.Audio.RepeatBehavior == RepeatBehavior.Stop;
+            RestartOnRepeatRadio.IsChecked = _keyMapping.Audio.RepeatBehavior == RepeatBehavior.Restart;
+            
+            DefaultDurationRadio.IsChecked = _keyMapping.Audio.DurationMode == DurationMode.Default;
+            CustomDurationRadio.IsChecked = _keyMapping.Audio.DurationMode == DurationMode.Custom;
+            CustomDurationBox.Text = _keyMapping.Audio.CustomDurationSeconds.ToString();
+            
+            UpdateCustomDurationPanelVisibility();
 
             // 绑定事件
             VolumeSlider.ValueChanged += (s, e) =>
@@ -224,6 +233,17 @@ namespace UltAssist
                 return false;
             }
 
+            // 验证自定义时长
+            if (CustomDurationRadio.IsChecked == true)
+            {
+                if (!int.TryParse(CustomDurationBox.Text, out var customDuration) || customDuration <= 0)
+                {
+                    MessageBox.Show("自定义时长必须是正整数", "验证失败", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    CustomDurationBox.Focus();
+                    return false;
+                }
+            }
+
             return true;
         }
 
@@ -235,8 +255,10 @@ namespace UltAssist
                 Volume = (float)VolumeSlider.Value,
                 FadeInMs = int.Parse(FadeInBox.Text),
                 FadeOutMs = int.Parse(FadeOutBox.Text),
-                Loop = LoopCheck.IsChecked ?? false,
-                Interruptible = InterruptibleCheck.IsChecked ?? true
+                Interruptible = InterruptibleCheck.IsChecked ?? false,
+                RepeatBehavior = RestartOnRepeatRadio.IsChecked == true ? RepeatBehavior.Restart : RepeatBehavior.Stop,
+                DurationMode = CustomDurationRadio.IsChecked == true ? DurationMode.Custom : DurationMode.Default,
+                CustomDurationSeconds = int.TryParse(CustomDurationBox.Text, out var duration) ? duration : 30
             };
         }
 
@@ -244,6 +266,21 @@ namespace UltAssist
         {
             DialogResult = false;
             Close();
+        }
+
+        private void DurationRadio_Changed(object sender, RoutedEventArgs e)
+        {
+            UpdateCustomDurationPanelVisibility();
+        }
+
+        private void UpdateCustomDurationPanelVisibility()
+        {
+            if (CustomDurationPanel != null && CustomDurationRadio != null)
+            {
+                CustomDurationPanel.Visibility = CustomDurationRadio.IsChecked == true 
+                    ? Visibility.Visible 
+                    : Visibility.Collapsed;
+            }
         }
 
         protected override void OnClosed(EventArgs e)
