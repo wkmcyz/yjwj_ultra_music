@@ -175,11 +175,11 @@
                                 <Button x:Name="DeleteProfileBtn" Content="🗑️ 删除方案" Margin="0,0,5,0" Padding="8,5"
                                        Click="DeleteProfileBtn_Click"/>
                                 <Separator Margin="10,0" />
-                                <Button x:Name="CopyConfigBtn" Content="📋 复制配置" Margin="0,0,5,0" Padding="8,5"
-                                       Click="CopyConfigBtn_Click"/>
-                                <Button x:Name="ImportConfigBtn" Content="📁 导入" Margin="0,0,5,0" Padding="8,5"
+                                <Button x:Name="ImportConfigBtn" Content="📦 导入配置包" Margin="0,0,5,0" Padding="8,5"
+                                       ToolTip="导入ZIP配置包（推荐）或JSON配置文件"
                                        Click="ImportConfigBtn_Click"/>
-                                <Button x:Name="ExportConfigBtn" Content="💾 导出" Padding="8,5"
+                                <Button x:Name="ExportConfigBtn" Content="📦 导出配置包" Padding="8,5"
+                                       ToolTip="导出ZIP配置包（包含音乐）或JSON配置文件"
                                        Click="ExportConfigBtn_Click"/>
                             </StackPanel>
                         </Grid>
@@ -288,7 +288,7 @@
                         </StackPanel>
                         
                         <!-- 日志功能按钮 -->
-                        <StackPanel Orientation="Horizontal" Margin="0,0,0,0">
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
                             <Button x:Name="OpenLogBtn" Content="📋 查看日志" Padding="8,5" Margin="0,0,8,0"
                                    Background="#88C0D0" Foreground="White" BorderThickness="0"
                                    ToolTip="打开当前会话日志文件"
@@ -297,6 +297,14 @@
                                    Background="#A3BE8C" Foreground="White" BorderThickness="0"
                                    ToolTip="打开日志文件夹"
                                    Click="OpenLogDirBtn_Click"/>
+                        </StackPanel>
+
+                        <!-- 配置备份按钮 -->
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,0">
+                            <Button x:Name="BackupConfigBtn" Content="💾 备份配置" Padding="8,5" Margin="0,0,0,0"
+                                   Background="#EBCB8B" Foreground="#2E3440" BorderThickness="0"
+                                   ToolTip="备份当前配置"
+                                   Click="BackupConfigBtn_Click"/>
                         </StackPanel>
                     </StackPanel>
                 </GroupBox>

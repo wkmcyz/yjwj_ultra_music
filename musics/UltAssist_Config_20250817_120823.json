@@ -1,0 +1,71 @@
+{
+  "global": {
+    "headphoneDeviceId": "",
+    "virtualMicDeviceId": "",
+    "temporarilySetDefaultMic": false,
+    "listeningMode": "Global",
+    "gameProcessNames": [],
+    "globalListenerEnabled": true,
+    "overlay": {
+      "style": "None",
+      "position": "TopLeft",
+      "enabled": false
+    },
+    "debugMode": false
+  },
+  "profiles": [
+    {
+      "id": "4b15de5f-c7e7-42ec-affe-fc8fdb61086d",
+      "name": "test",
+      "description": "",
+      "keyMappings": [
+        {
+          "id": "96afac5d-845b-4800-8a01-3061733665c2",
+          "keys": {
+            "keys": [
+              "V"
+            ],
+            "isEmpty": false
+          },
+          "audio": {
+            "filePath": "C:\\Users\\wkmcy\\projects\\yjwj_ultra_music\\musics\\\u4E09\u56FD\u604B-\u7B49\u5F85\u826F\u4EBA\u5F52\u6765\u90A3\u4E00\u523B.wav",
+            "volume": 0.7,
+            "fadeInMs": 200,
+            "fadeOutMs": 150,
+            "loop": false,
+            "interruptible": true
+          },
+          "displayName": "v",
+          "exactMatch": false
+        }
+      ]
+    },
+    {
+      "id": "ade48c8c-343c-4ba9-a971-7d8b6f450131",
+      "name": "tianhai",
+      "description": "",
+      "keyMappings": [
+        {
+          "id": "dde02454-89dc-438c-aa6e-f9ee8351389c",
+          "keys": {
+            "keys": [
+              "V"
+            ],
+            "isEmpty": false
+          },
+          "audio": {
+            "filePath": "C:\\Users\\wkmcy\\projects\\yjwj_ultra_music\\musics\\\u4F60\u770B\u5230\u7684\u6211.wav",
+            "volume": 0.7,
+            "fadeInMs": 200,
+            "fadeOutMs": 150,
+            "loop": false,
+            "interruptible": true
+          },
+          "displayName": "v",
+          "exactMatch": true
+        }
+      ]
+    }
+  ],
+  "currentProfile": "ade48c8c-343c-4ba9-a971-7d8b6f450131"
+}

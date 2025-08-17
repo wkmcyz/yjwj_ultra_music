@@ -406,70 +406,120 @@ namespace UltAssist
             }
         }
 
-        private void CopyConfigBtn_Click(object sender, RoutedEventArgs e)
-        {
-            // TODO: 实现配置复制功能
-            MessageBox.Show("配置复制功能待实现", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
-        }
+
 
         private void ImportConfigBtn_Click(object sender, RoutedEventArgs e)
         {
-            var dialog = new OpenFileDialog
+            try
             {
-                Filter = "配置文件|*.json|所有文件|*.*",
-                Title = "导入配置"
-            };
+                var openDialog = new Microsoft.Win32.OpenFileDialog
+                {
+                    Title = "导入配置",
+                    Filter = "配置包 (*.zip)|*.zip|配置文件 (*.json)|*.json|所有文件 (*.*)|*.*",
+                    DefaultExt = "zip"
+                };
 
-            if (dialog.ShowDialog() == true)
+                if (openDialog.ShowDialog() == true)
+                {
+                    // 先提示用户确认
+                    var fileExt = Path.GetExtension(openDialog.FileName).ToLower();
+                    var warningMessage = fileExt == ".zip" 
+                        ? "导入配置包将覆盖当前所有设置并导入音乐文件，是否继续？\n\n建议在导入前先备份当前配置。"
+                        : "导入配置将覆盖当前所有设置，是否继续？\n\n注意：JSON文件不包含音乐文件，建议使用ZIP配置包。\n\n建议在导入前先备份当前配置。";
+
+                    var result = MessageBox.Show(warningMessage, "确认导入", 
+                        MessageBoxButton.YesNo, MessageBoxImage.Warning);
+
+                    if (result == MessageBoxResult.Yes)
+                    {
+                        bool success = false;
+                        string successMessage = "";
+
+                        if (fileExt == ".zip")
+                        {
+                            // 导入配置包（包含音乐文件）
+                            success = ConfigServiceV2.ImportConfigPackage(openDialog.FileName);
+                            successMessage = "配置包导入成功！\n\n配置文件和音乐文件已导入。\n应用将重新加载配置。";
+                        }
+                        else
+                        {
+                            // 导入仅配置文件（兼容旧版本）
+                            success = ConfigServiceV2.ImportConfig(openDialog.FileName);
+                            successMessage = "配置文件导入成功！\n\n注意：音乐文件未导入，请检查音乐文件路径。\n应用将重新加载配置。";
+                        }
+
+                        if (success)
+                        {
+                            MessageBox.Show(successMessage, "导入成功", 
+                                MessageBoxButton.OK, MessageBoxImage.Information);
+                            
+                            // 重新加载配置
+                            _core.LoadConfiguration();
+                            LoadConfiguration();
+                            UpdateStatusOverlay();
+                        }
+                        else
+                        {
+                            MessageBox.Show("配置导入失败!\n\n请检查文件格式是否正确。", "错误", 
+                                MessageBoxButton.OK, MessageBoxImage.Error);
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
             {
-                try
-                {
-                    var config = ConfigServiceV2.ImportConfig(dialog.FileName);
-                    if (config != null)
-                    {
-                        // TODO: 合并或替换当前配置
-                        MessageBox.Show("配置导入成功", "导入", MessageBoxButton.OK, MessageBoxImage.Information);
-                        LoadConfiguration();
-                    }
-                    else
-                    {
-                        MessageBox.Show("配置文件格式错误", "导入失败", MessageBoxButton.OK, MessageBoxImage.Error);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show($"导入失败: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
-                }
+                MessageBox.Show($"导入失败: {ex.Message}", "错误", 
+                    MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
         private void ExportConfigBtn_Click(object sender, RoutedEventArgs e)
         {
-            var dialog = new SaveFileDialog
+            try
             {
-                Filter = "配置文件|*.json|所有文件|*.*",
-                Title = "导出配置",
-                FileName = $"UltAssist_Config_{DateTime.Now:yyyyMMdd_HHmmss}.json"
-            };
-
-            if (dialog.ShowDialog() == true)
-            {
-                try
+                var saveDialog = new Microsoft.Win32.SaveFileDialog
                 {
-                    var success = ConfigServiceV2.ExportConfig(_core.GetConfiguration(), dialog.FileName);
-                    if (success)
+                    Title = "导出配置包",
+                    Filter = "配置包 (*.zip)|*.zip|配置文件 (*.json)|*.json|所有文件 (*.*)|*.*",
+                    DefaultExt = "zip",
+                    FileName = $"UltAssist_Package_{DateTime.Now:yyyyMMdd_HHmmss}.zip"
+                };
+
+                if (saveDialog.ShowDialog() == true)
+                {
+                    bool success = false;
+                    string successMessage = "";
+
+                    // 根据文件扩展名决定导出方式
+                    if (Path.GetExtension(saveDialog.FileName).ToLower() == ".zip")
                     {
-                        MessageBox.Show("配置导出成功", "导出", MessageBoxButton.OK, MessageBoxImage.Information);
+                        // 导出包含音乐文件的ZIP包
+                        success = ConfigServiceV2.ExportConfigPackage(saveDialog.FileName);
+                        successMessage = $"配置包已导出到:\n{saveDialog.FileName}\n\n包含配置文件和所有音乐文件。";
                     }
                     else
                     {
-                        MessageBox.Show("配置导出失败", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+                        // 导出仅配置文件（兼容旧版本）
+                        success = ConfigServiceV2.ExportConfig(saveDialog.FileName);
+                        successMessage = $"配置文件已导出到:\n{saveDialog.FileName}\n\n注意：仅包含配置，不含音乐文件。";
+                    }
+
+                    if (success)
+                    {
+                        MessageBox.Show(successMessage, "导出成功", 
+                            MessageBoxButton.OK, MessageBoxImage.Information);
+                    }
+                    else
+                    {
+                        MessageBox.Show("配置导出失败!", "错误", 
+                            MessageBoxButton.OK, MessageBoxImage.Error);
                     }
                 }
-                catch (Exception ex)
-                {
-                    MessageBox.Show($"导出失败: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
-                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"导出失败: {ex.Message}", "错误", 
+                    MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -773,6 +823,41 @@ namespace UltAssist
         {
             _statusOverlay?.Close();
             _core?.Dispose();
+        }
+
+
+
+        private void BackupConfigBtn_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var saveDialog = new Microsoft.Win32.SaveFileDialog
+                {
+                    Title = "备份配置",
+                    Filter = "配置备份 (*.json)|*.json|所有文件 (*.*)|*.*",
+                    DefaultExt = "json",
+                    FileName = $"UltAssist_Backup_{DateTime.Now:yyyyMMdd_HHmmss}.json"
+                };
+
+                if (saveDialog.ShowDialog() == true)
+                {
+                    if (ConfigServiceV2.BackupConfig(saveDialog.FileName))
+                    {
+                        MessageBox.Show($"配置已备份到:\n{saveDialog.FileName}", "备份成功", 
+                            MessageBoxButton.OK, MessageBoxImage.Information);
+                    }
+                    else
+                    {
+                        MessageBox.Show("配置备份失败!", "错误", 
+                            MessageBoxButton.OK, MessageBoxImage.Error);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"备份失败: {ex.Message}", "错误", 
+                    MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
     }
 
