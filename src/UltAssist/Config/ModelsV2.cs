@@ -20,7 +20,7 @@ namespace UltAssist.Config
         public bool TemporarilySetDefaultMic { get; set; } = false;
 
         // 监听配置
-        public ListeningMode ListeningMode { get; set; } = ListeningMode.GameWindowOnly;
+        public ListeningMode ListeningMode { get; set; } = ListeningMode.Global;
         public List<string> GameProcessNames { get; set; } = new();
         public bool GlobalListenerEnabled { get; set; } = true; // Ctrl+1 开关状态
 

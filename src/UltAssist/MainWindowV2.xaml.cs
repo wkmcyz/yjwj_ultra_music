@@ -153,6 +153,9 @@ namespace UltAssist
             GameWindowOnlyRadio.IsChecked = global.ListeningMode == ListeningMode.GameWindowOnly;
             GlobalListenRadio.IsChecked = global.ListeningMode == ListeningMode.Global;
             GameProcessCombo.Text = string.Join(";", global.GameProcessNames);
+            
+            // 更新游戏进程面板可见性（延迟执行确保UI已初始化）
+            Dispatcher.BeginInvoke(() => UpdateGameProcessPanelVisibility());
 
             // 顶部指示栏
             OverlayStyleCombo.SelectedValue = global.Overlay.Style.ToString();
@@ -597,6 +600,28 @@ namespace UltAssist
             {
                 MessageBox.Show($"刷新进程列表失败: {ex.Message}", "错误", 
                     MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private void ListeningModeRadio_Changed(object sender, RoutedEventArgs e)
+        {
+            UpdateGameProcessPanelVisibility();
+        }
+
+        private void UpdateGameProcessPanelVisibility()
+        {
+            // 确保UI控件已经初始化
+            if (GameWindowOnlyRadio == null || GameProcessPanel == null)
+                return;
+                
+            // 只有在"仅游戏窗口"模式下才显示游戏进程配置
+            if (GameWindowOnlyRadio.IsChecked == true)
+            {
+                GameProcessPanel.Visibility = Visibility.Visible;
+            }
+            else
+            {
+                GameProcessPanel.Visibility = Visibility.Collapsed;
             }
         }
 

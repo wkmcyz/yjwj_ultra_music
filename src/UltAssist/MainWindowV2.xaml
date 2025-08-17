@@ -83,13 +83,15 @@
                                 </Grid.ColumnDefinitions>
                                 
                                 <StackPanel Grid.Column="0">
-                                    <RadioButton x:Name="GameWindowOnlyRadio" Content="仅游戏窗口" IsChecked="True" 
-                                               ToolTip="只在永劫无间窗口激活时监听按键"/>
-                                    <RadioButton x:Name="GlobalListenRadio" Content="全局监听" Margin="0,5,0,0"
-                                               ToolTip="在任何窗口都监听按键"/>
+                                    <RadioButton x:Name="GameWindowOnlyRadio" Content="仅游戏窗口" 
+                                               ToolTip="只在游戏窗口激活时监听按键"
+                                               Checked="ListeningModeRadio_Changed"/>
+                                    <RadioButton x:Name="GlobalListenRadio" Content="全局监听" IsChecked="True" Margin="0,5,0,0"
+                                               ToolTip="在任何窗口都监听按键"
+                                               Checked="ListeningModeRadio_Changed"/>
                                 </StackPanel>
                                 
-                                <StackPanel Grid.Column="2">
+                                <StackPanel x:Name="GameProcessPanel" Grid.Column="2" Visibility="Collapsed">
                                     <TextBlock Text="监听的游戏进程:" Margin="0,0,0,3"/>
                                     <Grid>
                                         <Grid.ColumnDefinitions>

@@ -7,23 +7,64 @@ namespace UltAssist.Services
 {
     public sealed class AudioDeviceService
     {
-        private readonly MMDeviceEnumerator enumerator = new();
+        private readonly MMDeviceEnumerator enumerator;
+
+        public AudioDeviceService()
+        {
+            try
+            {
+                enumerator = new MMDeviceEnumerator();
+            }
+            catch (System.Exception ex)
+            {
+                System.Windows.MessageBox.Show($"音频设备服务初始化失败: {ex.Message}", "严重错误", 
+                    System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                throw;
+            }
+        }
 
         public List<MMDevice> GetRenderDevices()
         {
-            return enumerator.EnumerateAudioEndPoints(DataFlow.Render, DeviceState.Active).ToList();
+            try
+            {
+                return enumerator.EnumerateAudioEndPoints(DataFlow.Render, DeviceState.Active).ToList();
+            }
+            catch (System.Exception ex)
+            {
+                System.Windows.MessageBox.Show($"获取播放设备失败: {ex.Message}", "音频错误", 
+                    System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                return new List<MMDevice>();
+            }
         }
 
         public List<MMDevice> GetCaptureDevices()
         {
-            return enumerator.EnumerateAudioEndPoints(DataFlow.Capture, DeviceState.Active).ToList();
+            try
+            {
+                return enumerator.EnumerateAudioEndPoints(DataFlow.Capture, DeviceState.Active).ToList();
+            }
+            catch (System.Exception ex)
+            {
+                System.Windows.MessageBox.Show($"获取录制设备失败: {ex.Message}", "音频错误", 
+                    System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                return new List<MMDevice>();
+            }
         }
 
         public MMDevice GetDeviceByIdOrDefault(string id, DataFlow flow)
         {
-            var devices = enumerator.EnumerateAudioEndPoints(flow, DeviceState.Active).ToList();
-            var found = devices.FirstOrDefault(d => d.ID == id);
-            return found ?? enumerator.GetDefaultAudioEndpoint(flow, Role.Multimedia);
+            try
+            {
+                var devices = enumerator.EnumerateAudioEndPoints(flow, DeviceState.Active).ToList();
+                var found = devices.FirstOrDefault(d => d.ID == id);
+                return found ?? enumerator.GetDefaultAudioEndpoint(flow, Role.Multimedia);
+            }
+            catch (System.Exception ex)
+            {
+                System.Windows.MessageBox.Show($"音频设备访问失败: {ex.Message}\n\n设备ID: {id}\n流方向: {flow}", "音频错误", 
+                    System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                throw;
+            }
         }
 
         public string GetDefaultEndpointId(DataFlow flow, Role role = Role.Multimedia)
