@@ -152,7 +152,7 @@ namespace UltAssist
             // 监听模式
             GameWindowOnlyRadio.IsChecked = global.ListeningMode == ListeningMode.GameWindowOnly;
             GlobalListenRadio.IsChecked = global.ListeningMode == ListeningMode.Global;
-            GameProcessBox.Text = string.Join(";", global.GameProcessNames);
+            GameProcessCombo.Text = string.Join(";", global.GameProcessNames);
 
             // 顶部指示栏
             OverlayStyleCombo.SelectedValue = global.Overlay.Style.ToString();
@@ -206,7 +206,28 @@ namespace UltAssist
                 // 监听模式
                 global.ListeningMode = GameWindowOnlyRadio.IsChecked == true ? 
                     ListeningMode.GameWindowOnly : ListeningMode.Global;
-                global.GameProcessNames = GameProcessBox.Text.Split(';', StringSplitOptions.RemoveEmptyEntries).ToList();
+                // 处理游戏进程名，如果包含中文说明则只取进程名部分
+                var processText = GameProcessCombo.Text;
+                var processNames = processText.Split(';', StringSplitOptions.RemoveEmptyEntries)
+                    .Select(p => 
+                    {
+                        var trimmed = p.Trim();
+                        
+                        // 过滤掉分割线和说明文本
+                        if (trimmed.StartsWith("─") || trimmed.StartsWith("📋") || trimmed.StartsWith("🎮") ||
+                            trimmed.Contains("以下为当前设备上检测到的进程") ||
+                            trimmed.Contains("常见游戏进程"))
+                        {
+                            return null;
+                        }
+                        
+                        // 如果包含空格和括号，说明有中文说明，只取第一部分
+                        var spaceIndex = trimmed.IndexOf(' ');
+                        return spaceIndex > 0 ? trimmed.Substring(0, spaceIndex) : trimmed;
+                    })
+                    .Where(p => !string.IsNullOrEmpty(p))
+                    .ToList();
+                global.GameProcessNames = processNames;
 
                 // 顶部指示栏
                 if (Enum.TryParse<OverlayStyle>(OverlayStyleCombo.SelectedValue?.ToString(), out var style))
@@ -484,6 +505,98 @@ namespace UltAssist
             catch (Exception ex)
             {
                 MessageBox.Show($"打开日志目录失败: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private void RefreshProcessBtn_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                // 获取当前运行的所有进程
+                var processes = Process.GetProcesses()
+                    .Where(p => !string.IsNullOrEmpty(p.ProcessName))
+                    .Select(p => p.ProcessName + ".exe")
+                    .Distinct()
+                    .OrderBy(name => name)
+                    .ToList();
+
+                // 过滤掉系统进程，只显示可能的游戏进程
+                var gameProcesses = processes.Where(p => 
+                    !p.StartsWith("svchost", StringComparison.OrdinalIgnoreCase) &&
+                    !p.StartsWith("System", StringComparison.OrdinalIgnoreCase) &&
+                    !p.StartsWith("Registry", StringComparison.OrdinalIgnoreCase) &&
+                    !p.StartsWith("dwm", StringComparison.OrdinalIgnoreCase) &&
+                    !p.StartsWith("winlogon", StringComparison.OrdinalIgnoreCase) &&
+                    !p.StartsWith("csrss", StringComparison.OrdinalIgnoreCase) &&
+                    !p.StartsWith("smss", StringComparison.OrdinalIgnoreCase) &&
+                    !p.StartsWith("wininit", StringComparison.OrdinalIgnoreCase) &&
+                    !p.StartsWith("services", StringComparison.OrdinalIgnoreCase) &&
+                    !p.StartsWith("lsass", StringComparison.OrdinalIgnoreCase) &&
+                    !p.StartsWith("explorer", StringComparison.OrdinalIgnoreCase)
+                ).ToList();
+
+                // 添加一些常见的游戏进程到顶部（带中文名称说明）
+                var commonGameProcesses = new List<string>
+                {
+                    "NarakaBladepoint.exe (永劫无间)",
+                    "csgo.exe (反恐精英：全球攻势)",
+                    "valorant.exe (无畏契约)",
+                    "League of Legends.exe (英雄联盟)",
+                    "Overwatch.exe (守望先锋)",
+                    "ApexLegends.exe (Apex英雄)",
+                    "TslGame.exe (绝地求生)",
+                    "FortniteClient-Win64-Shipping.exe (堡垒之夜)",
+                    "RainbowSix.exe (彩虹六号：围攻)",
+                    "Genshin Impact.exe (原神)",
+                    "StarRail.exe (崩坏：星穹铁道)",
+                    "ZenlessZoneZero.exe (绝区零)",
+                    "WutheringWaves.exe (鸣潮)",
+                    "CrossFire.exe (穿越火线)",
+                    "DNF.exe (地下城与勇士)",
+                    "WorldOfWarcraft.exe (魔兽世界)",
+                    "Wow.exe (魔兽世界)",
+                    "destiny2.exe (命运2)",
+                    "RocketLeague.exe (火箭联盟)",
+                    "DeadByDaylight.exe (黎明杀机)"
+                };
+
+                // 从常见游戏进程中提取进程名（去掉中文说明部分）
+                var commonProcessNames = commonGameProcesses
+                    .Select(p => p.Split(' ')[0]) // 取第一部分（进程名）
+                    .ToHashSet();
+
+                // 合并列表：常见游戏（带说明）+ 分割线 + 其他进程（不在常见列表中的）
+                var otherProcesses = gameProcesses.Where(p => !commonProcessNames.Contains(p)).ToList();
+                
+                var allProcesses = new List<string>();
+                
+                // 添加常见游戏进程
+                if (commonGameProcesses.Count > 0)
+                {
+                    allProcesses.Add("🎮 常见游戏进程 (推荐):");
+                    allProcesses.Add("─────────────────────────────────────");
+                    allProcesses.AddRange(commonGameProcesses);
+                }
+                
+                // 添加分割线
+                if (otherProcesses.Count > 0)
+                {
+                    allProcesses.Add("─────────────────────────────────────");
+                    allProcesses.Add("📋 以下为当前设备上检测到的进程:");
+                    allProcesses.Add("─────────────────────────────────────");
+                    allProcesses.AddRange(otherProcesses);
+                }
+
+                // 更新ComboBox
+                GameProcessCombo.ItemsSource = allProcesses;
+
+                MessageBox.Show($"已刷新进程列表，找到 {gameProcesses.Count} 个可选进程", "提示", 
+                    MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"刷新进程列表失败: {ex.Message}", "错误", 
+                    MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 

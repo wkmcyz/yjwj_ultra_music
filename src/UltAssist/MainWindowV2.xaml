@@ -91,8 +91,20 @@
                                 
                                 <StackPanel Grid.Column="2">
                                     <TextBlock Text="监听的游戏进程:" Margin="0,0,0,3"/>
-                                    <TextBox x:Name="GameProcessBox" Text="NarakaBladepoint.exe" 
-                                           ToolTip="多个进程用分号分隔，如: Game1.exe;Game2.exe"/>
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <ComboBox x:Name="GameProcessCombo" Grid.Column="0" 
+                                                IsEditable="True" 
+                                                Text="NarakaBladepoint.exe"
+                                                ToolTip="选择或输入游戏进程名，支持多个进程用分号分隔"/>
+                                        <Button x:Name="RefreshProcessBtn" Grid.Column="1" 
+                                               Content="🔄" Width="32" Height="24" Margin="5,0,0,0"
+                                               ToolTip="刷新进程列表" 
+                                               Click="RefreshProcessBtn_Click"/>
+                                    </Grid>
                                 </StackPanel>
                             </Grid>
                         </StackPanel>
