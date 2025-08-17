@@ -3,6 +3,8 @@ using System;
 using System.IO;
 using System.Windows;
 using UltAssist.Config;
+using NAudio.Wave;
+using NAudio.CoreAudioApi;
 
 namespace UltAssist
 {
@@ -10,6 +12,8 @@ namespace UltAssist
     {
         private KeyMapping _keyMapping;
         private readonly bool _isNewMapping;
+        private WaveOutEvent? _previewPlayer;
+        private AudioFileReader? _previewReader;
 
         public KeyMapping KeyMapping => _keyMapping;
 
@@ -114,17 +118,59 @@ namespace UltAssist
 
             try
             {
-                // 创建临时的音频设置进行试听
-                var tempAudio = CreateAudioSettings();
-                
-                // TODO: 实现音频试听功能
-                // 这里可以创建一个临时的音频播放器来试听
-                MessageBox.Show("试听功能待实现", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
+                // 如果正在播放，则停止
+                if (_previewPlayer?.PlaybackState == PlaybackState.Playing)
+                {
+                    StopPreview();
+                    TestAudioBtn.Content = "▶️ 试听";
+                    return;
+                }
+
+                // 开始播放试听
+                StartPreview();
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"试听失败: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+                StopPreview();
+                TestAudioBtn.Content = "▶️ 试听";
             }
+        }
+
+        private void StartPreview()
+        {
+            StopPreview(); // 确保先停止之前的播放
+
+            _previewReader = new AudioFileReader(AudioFileBox.Text);
+            _previewPlayer = new WaveOutEvent();
+
+            // 应用音量设置
+            _previewReader.Volume = (float)VolumeSlider.Value;
+
+            _previewPlayer.Init(_previewReader);
+            
+            // 播放完成事件
+            _previewPlayer.PlaybackStopped += (sender, e) =>
+            {
+                Dispatcher.Invoke(() =>
+                {
+                    TestAudioBtn.Content = "▶️ 试听";
+                    StopPreview();
+                });
+            };
+
+            _previewPlayer.Play();
+            TestAudioBtn.Content = "⏹️ 停止";
+        }
+
+        private void StopPreview()
+        {
+            _previewPlayer?.Stop();
+            _previewPlayer?.Dispose();
+            _previewPlayer = null;
+
+            _previewReader?.Dispose();
+            _previewReader = null;
         }
 
         private void SaveBtn_Click(object sender, RoutedEventArgs e)
@@ -198,6 +244,13 @@ namespace UltAssist
         {
             DialogResult = false;
             Close();
+        }
+
+        protected override void OnClosed(EventArgs e)
+        {
+            // 窗口关闭时停止试听
+            StopPreview();
+            base.OnClosed(e);
         }
     }
 }
