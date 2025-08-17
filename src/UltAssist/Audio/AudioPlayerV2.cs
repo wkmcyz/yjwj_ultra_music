@@ -50,6 +50,9 @@ namespace UltAssist.Audio
 
             EventLogger.LogAudioPlay(keyId, audioSettings.FilePath, "Current", audioSettings.Interruptible);
 
+            // 调试信息：输出RepeatBehavior的值
+            EventLogger.LogEvent("AUDIO", "RepeatBehavior检查", "按键={0}, RepeatBehavior={1}", keyId, audioSettings.RepeatBehavior);
+
             // 检查重复按键：根据RepeatBehavior处理
             if (_playingAudios.TryGetValue(keyId, out var existingAudio))
             {
@@ -62,7 +65,14 @@ namespace UltAssist.Audio
                 else // RepeatBehavior.Restart
                 {
                     EventLogger.LogEvent("AUDIO", "重复按键重新播放", "按键={0}, 原音频={1}", keyId, existingAudio.AudioSettings.FilePath);
-                    StopAudio(keyId, immediate: true); // 立即停止，准备重新播放
+                    
+                    // 立即停止并确保完全清理
+                    if (_playingAudios.TryRemove(keyId, out var audioToStop))
+                    {
+                        EventLogger.LogEvent("AUDIO", "强制停止", "按键={0}, 文件={1}", keyId, audioToStop.AudioSettings.FilePath);
+                        audioToStop.Stop();
+                        audioToStop.Dispose();
+                    }
                 }
             }
 
@@ -170,6 +180,7 @@ namespace UltAssist.Audio
         private readonly MMDevice _virtualMicDevice;
         private readonly AudioSettings _audioSettings;
         private readonly Action _onCompleted;
+        private volatile bool _isDisposed = false;
 
         private WasapiOut? _outHeadphone;
         private WasapiOut? _outVirtualMic;
@@ -336,26 +347,41 @@ namespace UltAssist.Audio
 
         private async Task MonitorPlaybackCompletion()
         {
-            if (_audioSettings.DurationMode == DurationMode.Custom)
+            try
             {
-                // 自定义时长：等待指定时长后停止
-                await Task.Delay(_audioSettings.CustomDurationSeconds * 1000);
-                _onCompleted?.Invoke();
-            }
-            else
-            {
-                // 默认时长：等待播放完成
-                while (_outHeadphone?.PlaybackState == PlaybackState.Playing || 
-                       _outVirtualMic?.PlaybackState == PlaybackState.Playing)
+                if (_audioSettings.DurationMode == DurationMode.Custom)
                 {
-                    await Task.Delay(100);
+                    // 自定义时长：等待指定时长后停止
+                    await Task.Delay(_audioSettings.CustomDurationSeconds * 1000);
                 }
-                _onCompleted?.Invoke();
+                else
+                {
+                    // 默认时长：等待播放完成
+                    while (!_isDisposed && 
+                           (_outHeadphone?.PlaybackState == PlaybackState.Playing || 
+                            _outVirtualMic?.PlaybackState == PlaybackState.Playing))
+                    {
+                        await Task.Delay(100);
+                    }
+                }
+                
+                // 只有在未被释放时才调用完成回调
+                if (!_isDisposed)
+                {
+                    _onCompleted?.Invoke();
+                }
+            }
+            catch (Exception ex)
+            {
+                EventLogger.LogEvent("AUDIO", "监控播放完成异常", "异常={0}", ex.Message);
             }
         }
 
         public void Dispose()
         {
+            if (_isDisposed) return;
+            _isDisposed = true;
+            
             try { _outHeadphone?.Stop(); } catch { }
             try { _outVirtualMic?.Stop(); } catch { }
             try { _outHeadphone?.Dispose(); } catch { }

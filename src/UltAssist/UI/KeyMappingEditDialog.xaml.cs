@@ -43,6 +43,7 @@ namespace UltAssist
                 Id = existingMapping.Id,
                 Keys = existingMapping.Keys,
                 DisplayName = existingMapping.DisplayName,
+                ExactMatch = existingMapping.ExactMatch,
                 Audio = new AudioSettings
                 {
                     FilePath = existingMapping.Audio.FilePath,
@@ -50,7 +51,10 @@ namespace UltAssist
                     FadeInMs = existingMapping.Audio.FadeInMs,
                     FadeOutMs = existingMapping.Audio.FadeOutMs,
                     Loop = existingMapping.Audio.Loop,
-                    Interruptible = existingMapping.Audio.Interruptible
+                    Interruptible = existingMapping.Audio.Interruptible,
+                    RepeatBehavior = existingMapping.Audio.RepeatBehavior,
+                    DurationMode = existingMapping.Audio.DurationMode,
+                    CustomDurationSeconds = existingMapping.Audio.CustomDurationSeconds
                 }
             };
             
