@@ -204,6 +204,11 @@ namespace UltAssist.Core
             _audioPlayer?.StopAllAudios(immediate: true);
         }
 
+        public void StopAudio(string keyId)
+        {
+            _audioPlayer?.StopAudio(keyId, immediate: false);
+        }
+
         private void InitializeAudioPlayer()
         {
             try

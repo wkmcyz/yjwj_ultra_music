@@ -21,6 +21,8 @@ namespace UltAssist
         private StatusOverlayWindow? _statusOverlay;
         private int _devClickCount = 0;
         private DateTime _lastDevClick = DateTime.MinValue;
+        private Button? _currentTestButton; // 跟踪当前正在测试播放的按钮
+        private string? _currentTestKeyId; // 跟踪当前测试播放的按键ID
 
         public MainWindowV2()
         {
@@ -300,7 +302,31 @@ namespace UltAssist
         {
             if (sender is Button button && button.Tag is KeyMappingViewModel vm)
             {
-                _core.TestPlayMapping(vm.Mapping);
+                var keyId = vm.Mapping.Keys.ToDisplayString();
+                
+                // 如果当前正在播放这个音频，则停止
+                if (_currentTestButton == button && _currentTestKeyId == keyId)
+                {
+                    _core.StopAudio(keyId);
+                    button.Content = "▶️ 测试";
+                    _currentTestButton = null;
+                    _currentTestKeyId = null;
+                }
+                else
+                {
+                    // 停止之前的测试播放
+                    if (_currentTestButton != null && !string.IsNullOrEmpty(_currentTestKeyId))
+                    {
+                        _core.StopAudio(_currentTestKeyId);
+                        _currentTestButton.Content = "▶️ 测试";
+                    }
+                    
+                    // 开始新的测试播放
+                    _core.TestPlayMapping(vm.Mapping);
+                    button.Content = "⏹️ 停止";
+                    _currentTestButton = button;
+                    _currentTestKeyId = keyId;
+                }
             }
         }
 
@@ -788,7 +814,35 @@ namespace UltAssist
                 
                 // 更新状态栏
                 _statusOverlay?.UpdatePlayingAudios(playingFiles.ToArray());
+                
+                // 检查测试播放按钮状态
+                UpdateTestButtonState(playingFiles);
             });
+        }
+
+        private void UpdateTestButtonState(List<string> playingFiles)
+        {
+            if (_currentTestButton != null && !string.IsNullOrEmpty(_currentTestKeyId))
+            {
+                // 检查当前测试的音频是否还在播放
+                var isPlaying = _core?.CurrentlyPlayingFiles?.Contains(
+                    System.IO.Path.GetFileName(GetTestAudioFilePath(_currentTestKeyId))) ?? false;
+                
+                if (!isPlaying)
+                {
+                    // 播放已停止，恢复按钮状态
+                    _currentTestButton.Content = "▶️ 测试";
+                    _currentTestButton = null;
+                    _currentTestKeyId = null;
+                }
+            }
+        }
+
+        private string? GetTestAudioFilePath(string keyId)
+        {
+            var profile = _core?.Config?.Profiles?.FirstOrDefault(p => p.Name == _core.CurrentProfile);
+            var mapping = profile?.KeyMappings?.FirstOrDefault(m => m.Keys.ToDisplayString() == keyId);
+            return mapping?.Audio?.FilePath;
         }
 
         private void OnLastKeyPressed(string keyName, DateTime time)
